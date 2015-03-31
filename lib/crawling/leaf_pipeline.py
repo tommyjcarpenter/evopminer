@@ -24,8 +24,8 @@ THE SOFTWARE.
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/topics/item-pipeline.html
 from unidecode import unidecode #used to convert strange unicode into ascii
-from lib.utils.stringFunctions import ContractionsTagsWhitey
-from lib.utils.databaseConnector import cralwerDBObject
+from lib.utils.string_functions import cleanse_tags_contractions_whitespace
+from lib.utils.mysql import CrawlerDBC
 
 #cleans the items before being entered into the database. 
 class myNissanLeafClean(object):
@@ -34,7 +34,7 @@ class myNissanLeafClean(object):
           return item
        
        #fix contractions in title
-       item['title'] = ContractionsTagsWhitey(item['title'])
+       item['title'] = cleanse_tags_contractions_whitespace(item['title'])
        
        #infer numcomments
        item['numcomments'] = len(item['comments'])
@@ -50,7 +50,7 @@ class myNissanLeafClean(object):
            #blah
            #this gets parsed as two seperate comments. but we only want this to count as one post. 
            
-           #instead well split the string (using pythoin) based on the div tag and take the shit before the last tag
+           #instead well split the string (using pythoin) based on the div tag and take the content before the last tag
            #KILL ALL OF THIS:
            #<div class="postbody"><div class="quotetitle">padamson1 wrote:</div><div class="quotecontent"
            #>I've been using the coil and twist method used by sailors (as shown here <a href="http://www.youtu
@@ -68,13 +68,13 @@ class myNissanLeafClean(object):
            
            #note this wont work if there is a quote before and after a posters post, but hopefully the number of these si small
            thec = item['comments'][c].split("</div>")[-2]
-           comments += "{" + item['commentdates'][c] + "|||" + (ContractionsTagsWhitey(thec) + "}\n")
+           comments += "{" + item['commentdates'][c] + "|||" + (cleanse_tags_contractions_whitespace(thec) + "}\n")
        item['newCommentFormat'] = comments
        return item
  
 
 #put the items in de db      
-class myNissanLeafDB(cralwerDBObject):  
+class myNissanLeafDB(CrawlerDBC):  
     def process_item(self, item, spider):
        if 'myNissanLeafDB' not in getattr(spider, 'pipelines'):
           return item

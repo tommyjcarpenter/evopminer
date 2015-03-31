@@ -21,7 +21,7 @@ THE SOFTWARE.
 """
 
 from lib import rootdir, debugging_logger, thelogger 
-from lib import resultsTableName 
+from lib import results_table 
 
 
 #container for one product, feature pair
@@ -38,8 +38,8 @@ class ResultContainerDict(object):
         self.ContainerDict = dict() #dict of dicts
         
     #add a sentence to "POS" or "NEG"    
-    def addResult(self, product, feature, pOrN, hsh, sentence, parse):
-        assert (pOrN == "POS" or pOrN == "NEG" or pOrN == "NEU"),  "pOrN Fail" 
+    def add_result(self, product, feature, pol, hsh, sentence, parse):
+        assert (pol == "POS" or pol == "NEG" or pol == "NEU"),  "pol Fail" 
 
         #if key doesn't exist add it
         try:
@@ -55,16 +55,16 @@ class ResultContainerDict(object):
             self.ContainerDict[product][feature]["NEU"] = FeatureWiseResult() 
 
         #add the result
-        self.ContainerDict[product][feature][pOrN].hashes.append(hsh)
-        self.ContainerDict[product][feature][pOrN].sents.append(sentence)
-        self.ContainerDict[product][feature][pOrN].parses.append(parse)
+        self.ContainerDict[product][feature][pol].hashes.append(hsh)
+        self.ContainerDict[product][feature][pol].sents.append(sentence)
+        self.ContainerDict[product][feature][pol].parses.append(parse)
 
     
     #log debuggung info a file that can be used for debugging
-    def log_debugging(self, currSite, dbc):
-        debugging_logger.debug("logging debugging info for: {0}".format(currSite.ProdObj.Name))
+    def log_debugging(self, site, dbc):
+        debugging_logger.debug("logging debugging info for: {0}".format(site.product.name))
         
-        gtdict = dbc.pullAllHashesInGTForProduct(currSite.ProdObj.Name) #get all the IDs that are in GT for this product. 
+        gtdict = dbc.get_truth_hashes_product(site.product.name) #get all the IDs that are in GT for this product. 
         
         numpos = 0
         numneg = 0
@@ -102,11 +102,11 @@ class ResultContainerDict(object):
 
 
      
-    def insertResults(self, currSite, dbc):
+    def insertResults(self, site, dbc):
         """produce prod, feature based summary"""
         insert_tups = []
         
-        dbc.deleteResultsForProduct(currSite.ProdObj.Name)
+        dbc.delete_product_results(site.product.name)
         resultsQ = []
         for prod in self.ContainerDict.keys():
             for feat in self.ContainerDict[prod].keys():
@@ -116,7 +116,7 @@ class ResultContainerDict(object):
                         insert_tups.append((self.ContainerDict[prod][feat][pol].hashes[p], feat, pol, str(p+1), str(num)))
                                 
         thelogger.info("Inserting result data...")            
-        dbc.bulk_insert("INSERT IGNORE INTO {res}".format(res=resultsTableName), 
+        dbc.bulk_insert("INSERT IGNORE INTO {res}".format(res=results_table), 
                         insert_tups,
                         "")    
     

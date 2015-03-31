@@ -24,7 +24,7 @@ from Tkinter import *
 
 
 #The constructor (the __init__ method) is called with a parent widget (the master), to which it adds a number of child widgets.
-class paramsGUI:
+class RunGUI:
     
     def __init__(self):
 
@@ -37,13 +37,13 @@ class paramsGUI:
         #for why exportselection=0 see: http://stackoverflow.com/questions/756662/using-multiple-listboxes-in-python-tkinter
         prodgroup = LabelFrame(self.frame, text="Product?", padx=5, pady=5)
         prodgroup .pack(padx=10, pady=10,side=LEFT)
-        self.prodlist = Listbox(prodgroup,selectmode=SINGLE,exportselection=0)
-        self.prodlist.insert(END,"Leaf")
-        self.prodlist.insert(END,"Volt")
-        self.prodlist.insert(END,"Tesla")
-        self.prodlist.insert(END,"eBike")
-        self.prodlist.select_set(3) #defaults to ebike for now
-        self.prodlist.pack()
+        self.prod_list = Listbox(prodgroup,selectmode=SINGLE,exportselection=0)
+        self.prod_list.insert(END,"Leaf")
+        self.prod_list.insert(END,"Volt")
+        self.prod_list.insert(END,"Tesla")
+        self.prod_list.insert(END,"eBike")
+        self.prod_list.select_set(3) #defaults to ebike for now
+        self.prod_list.pack()
         self.prodbutton = Button(prodgroup, text="Explain this", fg="red", command=lambda: self.create_window(prodtext))
         self.prodbutton.pack()
         
@@ -76,7 +76,7 @@ class paramsGUI:
         self.stages.insert(END,"Stage2: Clean")
         self.stages.insert(END,"Stage3: ProcessAndClassify")
         self.stages.insert(END,"Stage4: Graphage")
-        self.stages.insert(END,"Stage: GenerateTimeSeries")
+        self.stages.insert(END,"Stage: sentiment_time_series")
         self.stages.insert(END,"Stage: FrequencyDistributions")
         self.stages.pack()
         self.stagesbutton = Button(stagesgroup, text="Explain this", fg="red", command=lambda: self.create_window(stagestext))
@@ -98,7 +98,7 @@ class paramsGUI:
         self.UseOrDebug = self.rundebug.get(self.rundebug.curselection()[0])
         self.HOTSTART = self.hotstart.curselection()[0]
         self.stages = [self.stages.get(i) for i in self.stages.curselection()]
-        self.product = self.prodlist.get(self.prodlist.curselection()[0])
+        self.product = self.prod_list.get(self.prod_list.curselection()[0])
     
     def create_window(self,mestext):
         top = Toplevel()
@@ -139,6 +139,6 @@ Stage1: Crawl---Crawls the forums. This is done rarely; only when the review dat
 Stage2: Clean---Converts raw mined reviews into split and cleaned sentences. Precursor to sentence processing.\n
 Stage3: ProcessAndClassify---HOTSTART or Classify all sents in `cleaned sentences` for this product\n
 Stage4: Graphage---Graphs results\n
-Stage: GenerateTimeSeries---For a colleague of mine. You can probably ignore.\n
+Stage: sentiment_time_series---For a colleague of mine. You can probably ignore.\n
 Stage: FrequencyDistributions---for graphing the sentiments of unigrams and bigrams in the corpus 
 """

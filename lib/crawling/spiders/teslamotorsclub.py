@@ -38,7 +38,7 @@ class TeslaSpider(CrawlSpider):
                'http://www.teslamotorsclub.com/forumdisplay.php/113-Model-S-User-Interface',
                'http://www.teslamotorsclub.com/forumdisplay.php/111-Model-S-Interior-Exterior']
 
-   pipelines = ['teslaMotorsClubClean','teslaMotorsClubDB']
+   pipelines = ['TeslaCleaner','TeslaDBC']
 
    rules = ( 
    #the format of all forum pages which link to threads it the same as the above with "/pageX" appended

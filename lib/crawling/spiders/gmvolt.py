@@ -26,8 +26,8 @@ from scrapy.selector import HtmlXPathSelector
 from lib.crawling.items import voltItem
 from unidecode import unidecode #used to convert strange unicode into ascii
 
-class voltSpider(CrawlSpider):
-   name = 'voltSpider'
+class VoltSpider(CrawlSpider):
+   name = 'VoltSpider'
    allowed_domains = ['gm-volt.com']
    
    #this page is strange. there are no links to the next forum page for each page, only in groups of 10.
@@ -40,7 +40,7 @@ class voltSpider(CrawlSpider):
        string += '&order=desc'
        start_urls.append(string)
    
-   pipelines = ['voltClean','voltDB']
+   pipelines = ['VoltCleaner','VoltDBC']
    
    rules = (       
    #******Since we manually build the list of URLs to follow above, we only have a rule for links which point to threads. 

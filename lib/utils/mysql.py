@@ -27,17 +27,13 @@ import re
 import hashlib
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
-from lib import truthTableName, sentTableName, resultsTableName, sampleTableName
+from lib import truth_table, sent_table, results_table, sample_table
 from lib.utils.config_reader import conf_reader
 from lib import thelogger
 from pymysql.converters import escape_string
 
-           
-#this one is for the main program.            
-#only need one instance of this connector to manage all database calls
-
         
-class databaseConnector(object):
+class DBC(object):
     """Context manager mysql connection"""
     def __enter__(self):
         return self
@@ -52,15 +48,16 @@ class databaseConnector(object):
         try:            
             self.myDB = msql.connect(host=host, port=prt, user=user, passwd=passwd.replace("\"",""), db=database)   
             self.conn = self.myDB.cursor() 
-        except msql.Error, msg:
+        except Exception, msg:
             thelogger.error("MYSQL ERROR: {0}".format(msg))
             exit(1)
 
     def __exit__(self, *args):
-        self.close()
+        """closes mysql connection"""
+        self.conn.close() 
      
     def escape(self, stmt):
-        """Removes single quotes and escapes back slashes because they mess up SQL"""
+        """Escapes"""
         return escape_string(stmt).strip() if stmt else None
 
     def select_generator(self, stmt):
@@ -101,11 +98,11 @@ class databaseConnector(object):
         self.exec_query_list(insert_queue) 
                
     #generates a list of all hashes in ground truth. Used to do a join against the ground truth table.    
-    def pullAllHashesInGTForProduct(self,pr):
+    def get_truth_hashes_product(self,pr):
         stmt = 'SELECT {truth}.ProdDateSentHash,{truth}.feature,{truth}.label ' \
                'from {truth} INNER JOIN {sent} ' \
                'ON {truth}.ProdDateSentHash = {sent}.ProdDateSentHash ' \
-               'WHERE {sent}.Product = "{prod}"'.format(truth=truthTableName,sent=sentTableName,prod=pr)
+               'WHERE {sent}.Product = "{prod}"'.format(truth=truth_table,sent=sent_table,prod=pr)
         
         gtdict = dict()
         
@@ -120,14 +117,14 @@ class databaseConnector(object):
     
               
     #compute precision and recall
-    def computePrecisionAndRecall(self,product):
+    def precision_recall(self,product):
         #first fetch the results        
         stmt = 'SELECT {res}.Feature, {res}.Label as class, {truth}.Label as truth \n' \
                'from {res} INNER JOIN {truth} \n '\
                'ON {res}.ProdDateSentHash = {truth}.ProdDateSentHash and {res}.Feature = {truth}.Feature \n' \
                'INNER JOIN {sent} \n' \
                'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash \n' \
-               'WHERE {sent}.Product = "{prod}" \n'.format(truth=truthTableName,sent=sentTableName,prod=product,res=resultsTableName)
+               'WHERE {sent}.Product = "{prod}" \n'.format(truth=truth_table,sent=sent_table,prod=product,res=results_table)
                
                #must join featute becase the same sentence can be classified for multiple features. Also, there may be some rows in results where the PDShash is classified for a feature that it is not classified in GT and you may have rows in GT classifying some PDSh for results but the program did not classify that same PDSh for results. 
                #mysql> SELECT Results.Feature, Results.Label as class, GroundTruth.Label as truth  from Results INNER JOIN GroundTruth   ON Results.ProdDateSentHash = GroundTruth.ProdDateSentHash and Results.Feature = GroundTruth.Feature  INNER JOIN CleanedSentences  ON Results.ProdDateSentHash = CleanedSentences.ProdDateSentHash  WHERE CleanedSentences.Product = "Volt";
@@ -207,13 +204,13 @@ class databaseConnector(object):
         return results
 
     #get classification results
-    def getResults(self,product, limit):
+    def get_results(self,product, limit):
         #first fetch the results  
                      
         stmt = 'SELECT {res}.Feature, {res}.Label as class \n' \
                'from {res} INNER JOIN {sent} \n' \
                'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash \n' \
-               'WHERE {sent}.Product = "{prod}" limit {lim}\n'.format(lim=limit,sent=sentTableName,prod=product,res=resultsTableName)
+               'WHERE {sent}.Product = "{prod}" limit {lim}\n'.format(lim=limit,sent=sent_table,prod=product,res=results_table)
                
                #must join featute becase the same sentence can be classified for multiple features. Also, there may be some rows in results where the PDShash is classified for a feature that it is not classified in GT and you may have rows in GT classifying some PDSh for results but the program did not classify that same PDSh for results. 
                #mysql> SELECT Results.Feature, Results.Label as class, GroundTruth.Label as truth  from Results INNER JOIN GroundTruth   ON Results.ProdDateSentHash = GroundTruth.ProdDateSentHash and Results.Feature = GroundTruth.Feature  INNER JOIN CleanedSentences  ON Results.ProdDateSentHash = CleanedSentences.ProdDateSentHash  WHERE CleanedSentences.Product = "Volt";
@@ -248,23 +245,23 @@ class databaseConnector(object):
       
                     
     #sample a small section of results for reading for groundtruth        
-    def sampleForManualReading(self, classPercent, neuPercent, product):
+    def sample_for_classification(self, class_percent, neu_percent, product):
         #first fetch the results table
-        selectStatement1 = 'SELECT {res}.sentenceid, {res}.Feature, {sent}.sentence, {res}.Label' \
+        stmt = 'SELECT {res}.sentenceid, {res}.Feature, {sent}.sentence, {res}.Label' \
                            'FROM {res}, {sent} ' \
-                           'WHERE {res}.sentenceid = {sent}.sentenceid and {res}.Product = "{prod}"'.format(res=resultsTableName,sent=sentTableName,prod=product)
+                           'WHERE {res}.sentenceid = {sent}.sentenceid and {res}.Product = "{prod}"'.format(res=results_table,sent=sent_table,prod=product)
      
         #first, add all the insert statements into one of two lists for each feature. The first list for each feature 
         # contains pos and neg inserts, and the second contains only neutrals. Both are then sampled from at different rates
         inserts = dict()
-        for d in self.select_generator(selectStatement1):
+        for d in self.select_generator(stmt):
             sid = str(d[0])
             f = str(d[1])
             s = str(d[2])
             l = str(d[3]) #only used to see whether sampled or not
             
             #create an insert statement and add it to queue
-            stmt = 'INSERT INTO {samp} VALUES("{prod}","{si}","{feat}","{sent}"'.format(samp=sampleTableName,prod=product,si=sid,feat=f,sent=s)
+            stmt = 'INSERT INTO {samp} VALUES("{prod}","{si}","{feat}","{sent}"'.format(samp=sample_table,prod=product,si=sid,feat=f,sent=s)
 
             try: #add neutrals to second list, add pos/neg to first
                 inserts[f][l == "NEU"].append(stmt) #bombs in O(1) if not already in inserts, otherwise do nothing
@@ -272,65 +269,59 @@ class databaseConnector(object):
                 inserts[f] = [[],[stmt]] if l == "NEU" else [[stmt],[]]
             
         #build the actual insert list by sampling the classified, neutrals seperately and adding the sampled
-        InsertList = [] #final insert queue
-        numClassInserted = 0
-        numNeuInserted = 0
+        inserts = [] #final insert queue
+        num_class_inserted = 0
+        num_neu_inserted = 0
         
         #insert statements into the final insert queue
         for k in inserts.keys():
-            numClass = len(inserts[k][0]) #number of those classified
-            numClassToIns = int(classPercent*numClass) #number of classified to insert based on sampling percentage
-            numClassInserted += numClassToIns
+            num_class = len(inserts[k][0]) #number of those classified
+            num_class_to_ins = int(class_percent*num_class) #number of classified to insert based on sampling percentage
+            num_class_inserted += num_class_to_ins
             
             #sampling without replacement gives indices of those to insert
-            indices = random.sample(range(numClass), numClassToIns) 
+            indices = random.sample(range(num_class), num_class_to_ins) 
             for i in indices:
-                InsertList.append(inserts[k][0][i]) #add these to final InsertList
+                inserts.append(inserts[k][0][i]) #add these to final inserts
                 
-            numNeu = len(inserts[k][1]) #number of those neutral
-            numNeuToIns = int(neuPercent*numNeu) #number of neutral to inser based on sampling percentage
-            numNeuInserted += numNeuToIns
+            num_neu = len(inserts[k][1]) #number of those neutral
+            num_neu_to_ins= int(neu_percent*num_neu) #number of neutral to inser based on sampling percentage
+            num_neu_inserted += num_neu_to_ins
             
             #sampling without replacement gives indices of those to insert
-            indices = random.sample(range(numNeu), numNeuToIns) 
+            indices = random.sample(range(num_neu), num_neu_to_ins) 
             for i in indices:
-                InsertList.append(inserts[k][1][i]) #add these to final InsertList
+                inserts.append(inserts[k][1][i]) #add these to final inserts
     
         #now insert everything
-        self.exec_query_list(InsertList)
+        self.exec_query_list(inserts)
         
     #deletes all results in results table before entering new results    
-    def deleteResultsForProduct(self,pr):
+    def delete_product_results(self,pr):
         """deletes results table for a product in order to insert new results"""
         
         stmt = 'DELETE FROM {res} where ProdDateSentHash in '\
-               '(select ProdDateSentHash from {sent} where Product="{prod}")'.format(res=resultsTableName,sent=sentTableName,prod=pr)
+               '(select ProdDateSentHash from {sent} where Product="{prod}")'.format(res=results_table,sent=sent_table,prod=pr)
         self.exec_query_list([stmt])
 
     
     #generates sentences from the cleaned sentences table for processing. This is a database helper
-    #function for processSentences
-    def getCleanSentencesGenerator(self, pr, UseOrDebug):
+    #function for process_sentences
+    def gen_cleaned_sents(self, pr, UseOrDebug):
         if UseOrDebug == "DEBUG":
             stmt = "SELECT {sent}.ProdDateSentHash, {sent}.sentence FROM {sent} "\
                    "INNER JOIN {truth} ON {truth}.ProdDateSentHash = {sent}.ProdDateSentHash "\
-                   "WHERE {sent}.Product = '{prod}'".format(sent=sentTableName,prod=pr,truth=truthTableName)   
+                   "WHERE {sent}.Product = '{prod}'".format(sent=sent_table, prod=pr, truth=truth_table)   
         else:
-            stmt = "SELECT ProdDateSentHash, sentence FROM {sent} WHERE  {sent}.Product='{prod}';".format(sent=sentTableName,prod=pr)
+            stmt = "SELECT ProdDateSentHash, sentence FROM {sent} WHERE  {sent}.Product='{prod}';".format(sent=sent_table, prod=pr)
     
         for d in self.select_generator(stmt):
             id = str(d[0]).strip()
             sent = str(d[1]).strip()
-            yield (id, sent)    
-        
-    def close(self):
-        """closes mysql connection"""
-        self.conn.close() 
-        
-                       
+            yield (id, sent)                           
 
 #base class which all spider pipelines for inserting the mined items into the DB will inherit from
-class cralwerDBObject(databaseConnector):    
+class CrawlerDBC(DBC):    
     #exec an insert statement. The statement q will be passed by the inhertied class. 
     def insertItem(self, item, q):
        #sometimes 0 length items make it through

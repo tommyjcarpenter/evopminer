@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="evopminer",
-    version="1.0.1",
+    version="2.0.0",
     packages=find_packages(),
     author="Tommy Carpenter",
     author_email="tcarpent@uwaterloo.ca",

@@ -24,11 +24,11 @@ THE SOFTWARE.
 class Website(object):
     
     def __init__(self, ProductObject, table, fields, spider, log):    
-        self.ProdObj = ProductObject
-        self.Table = table
-        self.FieldsToPull = fields #this is the list of columns in sql table that will be processed, e.g., "Body", "Comments"
-        self.Spider = spider
-        self.LogFile = log
+        self.product = ProductObject
+        self.table = table
+        self.fields = fields #this is the list of columns in sql table that will be processed, e.g., "Body", "Comments"
+        self.spider = spider
+        self.log = log
         
         
         

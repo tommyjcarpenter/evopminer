@@ -73,10 +73,10 @@ with open("conf/requiredFiles/defaultSentiments.txt") as defsents:
 # | (__/ _ \ ' \(_-<  _/ _` | ' \  _(_-<
 #  \___\___/_||_/__/\__\__,_|_||_\__/__/ 
 #These define some constants used in the database                                   
-sampleTableName = "Sample"
-truthTableName = "GroundTruth"
-sentTableName = "CleanedSentences"
-resultsTableName = "Results"
+sample_table = "Sample"
+truth_table = "GroundTruth"
+sent_table = "CleanedSentences"
+results_table = "Results"
 tod = date.today()
 agoToDates = [tod.strftime('%Y-%m-%d'),
               (tod-timedelta(weeks=1)).strftime('%Y-%m-%d'),
@@ -94,16 +94,16 @@ higherIntensityModifiers = ["accelerated","far","farther","really","especially",
                             "considerably", "pretty", "much", "very", "24/7", "often", "frequent", "frequently", "huge", "gain", "gains", 
                             "big", "bigger", "biggest", "high", "higher", "highest", "highly", "large", "larger", "largest", "increasingly", 
                             "increase", "increased", "long", "longer", "further", "more"]
-valenceShifters = ["no-longer","free","myth","wish","overly","never","moot", "dont","ain't","without","w/o", "not", "rarely", "never", "zero", "no", "none","nothing", "lack", "lacks"]
+valence_shifts = ["no-longer","free","myth","wish","overly","never","moot", "dont","ain't","without","w/o", "not", "rarely", "never", "zero", "no", "none","nothing", "lack", "lacks"]
 #used in combination with pos and neg feature, e.g., "i have a good thing"
-presenceOf = ["due-to","evidence","occurring","inevitably","felt","only","appreciable","discernible","have","had","sign","experience","expirienced","expiriencing"] 
+presence = ["due-to","evidence","occurring","inevitably","felt","only","appreciable","discernible","have","had","sign","experience","expirienced","expiriencing"] 
 #ignore sentences contining these phrases becuase these often indicate the user is asking a question
 ignoresSentenceWide = ["say-that","how-much","do-not-know","question","wondering","is-there","are-there","are-you","does-anyone","do-you","curious","hopefully","might","may","wonder","as-long-as","if","should"] #tested
 #ignore chunkscontining these phrases becuase these often indicate the user is talking about a hypethtical scario or making relative statements
-ignoresWithinChunk = ["for-the","need","claims","thought",'might',"idea","could","can","may","your","helps","help","possibly",'curious','maybe','want']
+chunk_ignores= ["for-the","need","claims","thought",'might',"idea","could","can","may","your","helps","help","possibly",'curious','maybe','want']
 #"than","you",'',"will",
 
 
 #these words are filtered out of sentences
 stop = set(stopwords.words('english')) | set(("the","that","are","am",'about','on','a','to','is','it','like',"much-like","there","which","not-only","any",'be'))
-stop = stop - set(lowerIntensityModifiers) - set(higherIntensityModifiers)  - set(valenceShifters)  - set(presenceOf) - set(ignoresSentenceWide) - set(ignoresWithinChunk)
+stop = stop - set(lowerIntensityModifiers) - set(higherIntensityModifiers)  - set(valence_shifts)  - set(presence) - set(ignoresSentenceWide) - set(chunk_ignores)

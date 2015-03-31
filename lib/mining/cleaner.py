@@ -20,41 +20,46 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
 THE SOFTWARE.
 """
 
+"""
+This module is meant to clean text/sentences prior to classification.
+"""
+
+
 import nltk
 from nltk.collocations import *
 import re
 from nltk.corpus import stopwords
 import hashlib
 from datetime import date, timedelta
-from lib import misspellingsDict, contractionsDict, sentTableName, truthTableName, agoToDates, thelogger
-from lib.utils import stringFunctions
+from lib import misspellingsDict, contractionsDict, sent_table, truth_table, agoToDates, thelogger
+from lib.utils import string_functions
 
-def process_into_cleaned_sentences(currSite, dbc): 
+def process_into_cleaned_sentences(site, dbc): 
     """takes the raw mined reviews, cleans them into sentences, and then puts them back into DB"""
     thelogger.info("Selecting/Cleaning Data..\n")
     tups = [] #expects (date, text) pairs, or in the case of ebikes, (date, text, questionNum, responderID) pairs
         
-    if currSite.ProdObj.Name == "eBike":
+    if site.product.name == "eBike":
         """ASSUMED FORMAT: date, comments, QuestionNumber, ResponseNumber"""
         #get the blob of uncleaned text and clean, insert it
         stmt = 'SELECT Date, '
-        for f in range(0, len(currSite.FieldsToPull)):
-            stmt += currSite.FieldsToPull[f]
-            stmt += ', ' if (f < len(currSite.FieldsToPull) -1) else ' ' #add comma if not last field
-            stmt += ', Question, responseNumber from ' + currSite.Table    
+        for f in range(0, len(site.fields)):
+            stmt += site.fields[f]
+            stmt += ', ' if (f < len(site.fields) -1) else ' ' #add comma if not last field
+            stmt += ', Question, responseNumber from ' + site.table    
         
         #process each row which contains a date and a post, the post which may contain many sentences
-        for d in dbc.SQLSelectGenerator(stmt):   
-            tups.append((fixebikeDate(d[0]),d[1],d[2],d[3]))     #(date, text, questionNum, responderID)
+        for d in dbc.select_generator(stmt):   
+            tups.append((fix_ebike_date(d[0]),d[1],d[2],d[3]))     #(date, text, questionNum, responderID)
     
     else:
         """ASSUMED FORMAT:{DATE|||COMMENT}{DATE|||COMMENT}{DATE|||COMMENT}..."""        
         #get the blob of uncleaned text and clean, insert it
         stmt = 'SELECT '
-        for f in range(0, len(currSite.FieldsToPull)):
-            stmt += currSite.FieldsToPull[f]
-            stmt += ', ' if (f < len(currSite.FieldsToPull) -1) else ' ' #add comma if not last field
-            stmt += 'from ' + currSite.Table    
+        for f in range(0, len(site.fields)):
+            stmt += site.fields[f]
+            stmt += ', ' if (f < len(site.fields) -1) else ' ' #add comma if not last field
+            stmt += 'from ' + site.table    
         
         #process each row which contains a date and a post, the post which may contain many sentences
         for d in dbc.select_generator(stmt):
@@ -68,20 +73,20 @@ def process_into_cleaned_sentences(currSite, dbc):
                     #get and fix date part
                     last_date = items[0].split("{")[1]
                     
-                    if currSite.ProdObj.Name == "Leaf":
-                       last_date = fixLeafDate(last_date )
-                    elif currSite.ProdObj.Name == "Volt":
-                       last_date = fixVoltDate(last_date )
-                    elif currSite.ProdObj.Name == "Tesla":
-                       last_date = fixTeslaDate(last_date.split(" ")[0]) #strip off time because this level is not needed for now. 
+                    if site.product.name == "Leaf":
+                       last_date = string_functions.fix_leaf_date(last_date )
+                    elif site.product.name == "Volt":
+                       last_date = string_functions.fix_volt_date(last_date )
+                    elif site.product.name == "Tesla":
+                       last_date = string_functions.fix_tesla_date(last_date.split(" ")[0]) #strip off time because this level is not needed for now. 
                    
                     text = items[1].split("}")[0]  #holds all the comments made at this date by this poster
                     tups.append((last_date, text)) #(date, text)         
     
-    performSentenceInserts(currSite, dbc, tups)       
+    insert_sents(site, dbc, tups)       
 
 
-def performSentenceInserts(currSite, dbc, tups): #last two only for surveys
+def insert_sents(site, dbc, tups): #last two only for surveys
     """takes a block of (date, bunch_of_comments) pairs, seperates the bunch_of_comments into sentences,
        cleans them, then inserts each as a sentence under that date"""
     thelogger.info("Cleaning data...")   
@@ -120,109 +125,48 @@ def performSentenceInserts(currSite, dbc, tups): #last two only for surveys
                 # each sentence in the reviews table to be enforced as unique then, because then there could only be one "I love my volt"
                 # for all time. Instead, we will hash (prod+date+sentence) and enforce THAT to be unique. 
                 
-                if currSite.ProdObj.Name == "eBike":
-                    dahash = hashlib.sha256(currSite.ProdObj.Name+str(i[2])+str(i[3])+date+s).hexdigest()            
+                if site.product.name == "eBike":
+                    dahash = hashlib.sha256(site.product.name+str(i[2])+str(i[3])+date+s).hexdigest()            
                 else:
-                    dahash = hashlib.sha256(currSite.ProdObj.Name+date+s).hexdigest()      
+                    dahash = hashlib.sha256(site.product.name+date+s).hexdigest()      
                 
                 #add to insert_tups
-                insert_tups.append((dahash, currSite.ProdObj.Name, s, date))      
+                insert_tups.append((dahash, site.product.name, s, date))      
     
     thelogger.info("Inserting cleaned data...")            
-    dbc.bulk_insert("INSERT IGNORE INTO {senttable}".format(senttable=sentTableName), 
+    dbc.bulk_insert("INSERT IGNORE INTO {senttable}".format(senttable=sent_table), 
                     insert_tups,
                     "")                  
 
 #Fixes known date data issues and raises an error on other issues
 #Sometimes the dates will say "4 weeks ago, 3 weeks ago etc.
 #These will be replaced with the dates specified here
-def fixDates(currSite, dbc):
+def fix_dates(site, dbc):
 
     updateQ = []
     
     stmt = 'select {sent}.ProdDateSentHash, {sent}.sentence, {sent}.Date '\
            'FROM {sent} '\
-           'where {sent}.Product = "{prod}"'.format(prod=currSite.ProdObj.Name,sent=sentTableName)
+           'where {sent}.Product = "{prod}"'.format(prod=site.product.name,sent=sent_table)
     
-    for d in dbc.SQLSelectGenerator(stmt):
+    for d in dbc.select_generator(stmt):
         oldhash = str(d[0]).strip()
         sent = str(d[1]).strip()  
         olddate = str(d[2]).strip()               
-        if currSite.ProdObj.Name == "Volt":
-            newdate = fixVoltDate(olddate)           
-        elif currSite.ProdObj.Name == "Leaf":
-             newdate = fixLeafDate(olddate)
-        elif currSite.ProdObj.Name == "Tesla":
-             newdate = fixTeslaDate(olddate)
+        if site.product.name == "Volt":
+            newdate = string_functions.fix_volt_date(olddate)           
+        elif site.product.name == "Leaf":
+             newdate = string_functions.fix_leaf_date(olddate)
+        elif site.product.name == "Tesla":
+             newdate = string_functions.fix_tesla_date(olddate)
              
         if newdate != "ERR" and newdate != olddate:
-            newhash = hashlib.sha256(currSite.ProdObj.Name+newdate+sent).hexdigest()    
+            newhash = hashlib.sha256(site.product.name+newdate+sent).hexdigest()    
             #we can use or replace because if it violates the hash then it must be the identical row including the date
-            updateQ.append('UPDATE OR REPLACE {sent} set ProdDateSentHash="{nwshs}", date = "{nwdate}" where ProdDateSentHash="{oldhsh}"'.format(sent=sentTableName,nwshs = newhash,nwdate = newdate,oldhsh = oldhash))
-            updateQ.append('UPDATE OR REPLACE {gt} set ProdDateSentHash="{nwshs}" where ProdDateSentHash="{oldhsh}"'.format(gt=truthTableName,nwshs = newhash,oldhsh = oldhash))
+            updateQ.append('UPDATE OR REPLACE {sent} set ProdDateSentHash="{nwshs}", date = "{nwdate}" where ProdDateSentHash="{oldhsh}"'.format(sent=sent_table,nwshs = newhash,nwdate = newdate,oldhsh = oldhash))
+            updateQ.append('UPDATE OR REPLACE {gt} set ProdDateSentHash="{nwshs}" where ProdDateSentHash="{oldhsh}"'.format(gt=truth_table,nwshs = newhash,oldhsh = oldhash))
         
     dbc.exec_query_list(updateQ)
     
 
 
-def fixTeslaDate(olddate):
-    if olddate == "today":
-        return date.today().strftime('%Y-%m-%d')
-    elif olddate == "yesterday":
-        return (date.today()-timedelta(days=1)).strftime('%Y-%m-%d')
-    return olddate            
-    
- 
-def fixebikeDate(olddate):
-    items = olddate.split(" ")
-    newdate = "{y}-{m}-{d}".format(m=stringFunctions.stringFunctions.monthToInt(items[0].lower()),d=items[1],y=items[2])
-    return newdate
-            
-#fixes known issues with mynissanleaf dates
-def fixLeafDate(olddate):
-    """Fixes known possible Leaf date data errors"""
-    
-    #FIRST TRY TO FIND ERRORS THAT ARE CAUSED BY [STUFF]DATE
-    tryToFindDate = re.findall(r"([a-z]{3} [0-9]{2}, [0-9]{4})",olddate)
-    if len(tryToFindDate) == 1:
-        newdate = tryToFindDate[0]
-        newdate = "{y}-{m}-{d}".format(m=stringFunctions.monthToInt(newdate.split(" ")[0]),
-                                       d=newdate.split(" ")[1].split(",")[0],
-                                       y=newdate.split(", ")[1])
-        return newdate
-    
-    #see if its in MM-DD-YYYY format
-    tryToFindDate = re.findall(r"([0-9]{2}-[0-9]{2}-[0-9]{4})",olddate)
-    if len(tryToFindDate) == 1:
-        newdate = stringFunctions.stringFunctions.convertDateToYYYYMMDDFormat(tryToFindDate[0])
-        return newdate
-      
-    #ERROR or nothing detected wrong
-    return olddate
-            
-            
-#fixes known issues with chevy volt dates
-def fixVoltDate(olddate):
-    """Fixes known possible Volt date data errors"""
-    
-    #FIRST TRY TO FIND ERRORS THAT ARE CAUSED BY [STUFF]DATE
-    tryToFindDate = re.findall(r"([0-9]{2}-[0-9]{2}-[0-9]{4})",olddate)
-    if len(tryToFindDate) == 1:
-        newdate = stringFunctions.convertDateToYYYYMMDDFormat(tryToFindDate[0])
-        return newdate
-        
-    #NEXT TRY TO FIND "X WEEKS AGO" ERRORS
-    tryToFindWEEKSAgo = re.findall(r"[0-9] week[s]? ago$",olddate)
-    if len(tryToFindWEEKSAgo) == 1:
-        agosIndex = int(tryToFindWEEKSAgo[0].split(" ")[0])
-        newdate = agoToDates[agosIndex]
-        return newdate
-            
-    #NEXT TRY TO FIND "X DAYS/HOURS/MINUTES AGO" ERRORS WHICH ARE ALL IN LAST WEEK SO USE TODAYS DATE
-    tryToFindDAYSAgo = re.findall(r"[0-9] day|hour|minute[s]? ago$",olddate)
-    if len(tryToFindDAYSAgo) == 1:
-        newdate = agoToDates[0]
-        return newdate
-    
-    #ERROR or nothing detected wrong
-    return olddate

@@ -27,14 +27,14 @@ import subprocess
 import pickle
 
 from lib.mining.product import Product
-from lib.mining.ResultsContainer import ResultContainerDict
-from lib.utils.databaseConnector import databaseConnector
-from lib.utils.grapher import graph, graphPolarityStacksUse
-from lib.mining.Website import Website
-from lib.mining.Processor import processSentences
-from lib.utils.statFunctions import frequencyDistributionComparison, GenerateTimeSeries, showWrongSentences
-from lib.mining.cleaner import process_into_cleaned_sentences, fixDates
-from lib.utils.gui import paramsGUI
+from lib.mining.results_container import ResultContainerDict
+from lib.utils.mysql import DBC
+from lib.utils.grapher import graph, graph_polarity_use
+from lib.mining.website import Website
+from lib.mining.classifier import classify_sentences
+from lib.utils.text_stats import compare_freq_dists, sentiment_time_series, wrong_sentences
+from lib.mining.cleaner import process_into_cleaned_sentences, fix_dates
+from lib.utils.gui import RunGUI
 from lib.utils.config_reader import conf_reader
 from lib import rootdir, thelogger
 
@@ -45,7 +45,7 @@ from lib import rootdir, thelogger
 
 
 #Initilize globals and results container object
-resultsContainer = ResultContainerDict() #init results container
+results = ResultContainerDict() #init results container
 
 
 #   ___                               
@@ -74,21 +74,21 @@ myChunks = ["implicfeat","vs-feat", "op-feat-op","op-feat","feat-op"]
 # |_|_\\_,_|_||_| |_| \__,_|_| \__,_|_|_|_/__/
 #THIS IS THE SECTION TO EDIT TO START A NEW RUN!
 
-params = paramsGUI()
+params = RunGUI()
 params.root.mainloop()
 UseOrDebug = params.UseOrDebug
 HOTSTART = params.HOTSTART
 stages = params.stages 
 prod = params.product
-currSite = ""
+site = ""
 if prod == "Leaf":
-    currSite = Website(Product("Leaf"),  "LeafReviews", ['Comments'], "myNissanLeafSpider", rootdir + "/" + "LeafLog.txt")
+    site = Website(Product("Leaf"),  "LeafReviews", ['Comments'], "myNissanLeafSpider", rootdir + "/" + "LeafLog.txt")
 elif prod == "Volt":
-    currSite = Website(Product("Volt"),  "VoltReviews", ["Comments"], "voltSpider", rootdir + "/" + "voltLog.txt")
+    site = Website(Product("Volt"),  "VoltReviews", ["Comments"], "VoltSpider", rootdir + "/" + "voltLog.txt")
 elif prod == "Tesla":
-    currSite = Website(Product("Tesla"),  "TeslaReviews", ['Comments'], "teslaMotorsClubSpider", rootdir + "/" + "TeslaLog.txt")
+    site = Website(Product("Tesla"),  "TeslaReviews", ['Comments'], "teslaMotorsClubSpider", rootdir + "/" + "TeslaLog.txt")
 elif prod == "eBike":
-    currSite = Website(Product("eBike"),  "Survey1Preliminary", ['Comments'], None, rootdir + "/" + "ebikeLog.txt")
+    site = Website(Product("eBike"),  "Survey1Preliminary", ['Comments'], None, rootdir + "/" + "ebikeLog.txt")
 params.destroy()
 
 #we initialize the tagger here because it takes awhile to load
@@ -102,46 +102,46 @@ StanfordTagger = POSTagger('lib/stanford-postagger-2014-06-16/models/english-lef
 # |___/\__\__,_|_|  \__| |_| |_| \___/\__\___/__/__/_|_||_\__, |
 #                                                         |___/ 
     
-with databaseConnector("eBike" if prod == "eBike" else None) as dbc:     
+with DBC("eBike" if prod == "eBike" else None) as dbc:     
     if 'Stage0: DataIntegrity' in stages:
         print("Stage 0: Fixing DirtyData' Issues Stuff...\n\n")
-        fixDates(currSite)
+        fix_dates(site, dbc)
     
     if 'Stage1: Crawl' in stages:
         thelogger.info("Stage 1: Crawling Reviews...\n\n")   
-        with open(currSite.LogFile, "w") as crawlog: 
-            subprocess.call([conf_reader["scrapy"]["exec_path"], 'crawl', currSite.Spider], universal_newlines=True, stdout=crawlog, stderr=crawlog, cwd=".")  
+        with open(site.log, "w") as crawlog: 
+            subprocess.call([conf_reader["scrapy"]["exec_path"], 'crawl', site.spider], universal_newlines=True, stdout=crawlog, stderr=crawlog, cwd=".")  
     
     if 'Stage2: Clean' in stages:    
         thelogger.info("Stage 2: Converting Raw Reviews Into Clean Sentences...\n\n")
-        process_into_cleaned_sentences(currSite, dbc)
+        process_into_cleaned_sentences(site, dbc)
     
     if 'Stage3: ProcessAndClassify' in stages:
         if HOTSTART == 1:
             thelogger.info("HOTSTARTING..")
-            resultsContainer = pickle.load(open(rootdir + "/" + currSite.ProdObj.Name + "_resultsPickle.pkl","rb"))
+            results = pickle.load(open(rootdir + "/" + site.product.name + "_resultsPickle.pkl","rb"))
         else:
             thelogger.info("Stage 3: Processing And Classifying Sentences...\n\n")
             cp = nltk.RegexpParser(grammar) 
-            processSentences(currSite, dbc, cp,  myChunks, resultsContainer, UseOrDebug, StanfordTagger)
-            pickle.dump(resultsContainer, open(rootdir + "/" + currSite.ProdObj.Name + "_resultsPickle.pkl","wb")) #Dump results object for later hotstart    
+            classify_sentences(site, dbc, cp,  myChunks, results, UseOrDebug, StanfordTagger)
+            pickle.dump(results, open(rootdir + "/" + site.product.name + "_resultsPickle.pkl","wb")) #Dump results object for later hotstart    
             
             thelogger.info("Printing Debugging Files...\n\n")
-            resultsContainer.log_debugging(currSite, dbc)
+            results.log_debugging(site, dbc)
             
             thelogger.info("Inserting Results...\n\n")
-            resultsContainer.insertResults(currSite, dbc)
+            results.insertResults(site, dbc)
             
     if 'Stage4: Graphage' in stages:
         thelogger.info("Stage 4: Graphing Results")
-        graph(currSite, dbc, UseOrDebug, 10000000000) #second parameter only used in "use" case because without a limit the sql query takes forever
+        graph(site, dbc, UseOrDebug, 10000000000) #second parameter only used in "use" case because without a limit the sql query takes forever
     
-    if 'Stage: GenerateTimeSeries' in stages:
+    if 'Stage: sentiment_time_series' in stages:
         thelogger.info("Making time series....")
-        GenerateTimeSeries(currSite)
+        sentiment_time_series(site)
     
     if 'Stage: FrequencyDistributions' in stages: #NEW STAGE: Classifies and Graphs Frequency Distributions of phrases found in the text
-        frequencyDistributionComparison(currSite, 10,4,True)
-        #frequencyDistributionComparison(currSite, 2000,100,False)
+        compare_freq_dists(site, 10,4,True)
+        #compare_freq_dists(site, 2000,100,False)
         
     thelogger.info("Done!")

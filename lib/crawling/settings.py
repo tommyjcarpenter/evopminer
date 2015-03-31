@@ -46,12 +46,12 @@ process_item(item, spider)
 #http://doc.scrapy.org/en/latest/topics/settings.html#std:setting-ITEM_PIPELINES
 #Lists are supported in ITEM_PIPELINES for backwards compatibility, but they are deprecated.
 ITEM_PIPELINES = {
-				  'lib.crawling.Pipeline_MyNissanLeaf.myNissanLeafClean':1,
-				  'lib.crawling.Pipeline_MyNissanLeaf.myNissanLeafDB':2,
-				  'lib.crawling.Pipeline_GMVolt.voltClean':3,
-				  'lib.crawling.Pipeline_GMVolt.voltDB':4,
-				  'lib.crawling.Pipeline_TeslaMotorsClub.teslaMotorsClubClean':5, 
-				  'lib.crawling.Pipeline_TeslaMotorsClub.teslaMotorsClubDB':6 
+				  'lib.crawling.leaf_pipeline.myNissanLeafClean':1,
+				  'lib.crawling.leaf_pipeline.myNissanLeafDB':2,
+				  'lib.crawling.volt_pipeline.VoltCleaner':3,
+				  'lib.crawling.volt_pipeline.VoltDBC':4,
+				  'lib.crawling.tesla_pipeline.TeslaCleaner':5, 
+				  'lib.crawling.tesla_pipeline.TeslaDBC':6 
                  }
 
 

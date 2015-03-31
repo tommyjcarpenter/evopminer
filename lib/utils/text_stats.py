@@ -28,14 +28,13 @@ from nltk.collocations import *
 from nltk.tokenize import RegexpTokenizer
 from nltk.collocations import *
 from nltk.corpus import wordnet
-from grapher import plotFD
-from databaseConnector import *
+from grapher import graph_freq_dist
 
-from lib import rootdir, stop, debugging_logger, ignoresWithinChunk, sentTableName, resultsTableName, truthTableName             
+from lib import rootdir, stop, debugging_logger, chunk_ignores, sent_table, results_table, truth_table             
 
 
 #this is only used for unigram and bigram graph coloring! This really needs to be renamed and reworked. 
-def getPolarity(term):
+def get_polarity(term):
     """tries to find the color of a term using sentiment dictionary. 
        if it is a bigram, it first sees if the first term is defined, then tries the second"""
     if not isinstance(term, tuple):
@@ -54,7 +53,7 @@ def getPolarity(term):
     return s
 
 
-def frequencyDistributionComparison(currSite, smin,bmin,allowNeutrals):
+def compare_freq_dists(site, smin,bmin,allowNeutrals):
     """analyzes the frequencies of words and bigrams found in all of the survey questions.
        four parameters are the min and max frequencies shown for single words and bigrams"""
     #words to not consider when doing frequency counts
@@ -65,7 +64,7 @@ def frequencyDistributionComparison(currSite, smin,bmin,allowNeutrals):
                        "ebike","ebikes","waterloo"))
     
     corpus = ""
-    for i in currSite.dbc.SQLSelectGenerator("select {0} from {1} limit 10000".format(currSite.FieldsToPull[0], currSite.Table)):
+    for i in site.dbc.select_generator("select {0} from {1} limit 10000".format(site.fields[0], site.table)):
         corpus += i[0] + " "
 
     #get list of all words as split by regex
@@ -82,7 +81,7 @@ def frequencyDistributionComparison(currSite, smin,bmin,allowNeutrals):
             if word == r:
                 word = eBikeReplacements[r]
                 break
-        if word not in stop and word != '' and word not in ignoresWithinChunk:
+        if word not in stop and word != '' and word not in chunk_ignores:
             filtered_words_bigrams.append(word)
             if word not in stop_single:
                 filtered_words_single.append(word)
@@ -106,7 +105,7 @@ def frequencyDistributionComparison(currSite, smin,bmin,allowNeutrals):
         count = 0                            
         for k,v in sorted(fds[i].items(), key=itemgetter(1), reverse=True):
            if v >= mins[i]:
-               s = getPolarity(k)
+               s = get_polarity(k)
                if s != "NEU" or allowNeutrals == True: 
                    Xs.append(count)
                    Ys.append(v)
@@ -114,8 +113,89 @@ def frequencyDistributionComparison(currSite, smin,bmin,allowNeutrals):
                    Xlabs.append(k)
                    count += 1
                
-        plotFD(Xs,Ys,Xlabs,Xcols,count)
+        graph_freq_dist(Xs,Ys,Xlabs,Xcols,count)
         
+
+
+#NOTE: this function was for a fellow student and you will not need to use it (as is now)
+#this is used to generate a time series of sentiments over time. 
+def sentiment_time_series(site):
+        
+    file1 = open(rootdir + "/timeseries/" + site.product.name + "_SentimentTimeSeries.txt","w")     
+    file2 = open(rootdir + "/timeseries/" + site.product.name + "_GeneralTimeSeries.txt","w")     
+    file1.write("start,end(inclusive),feature,num pos, num neu, num neg, total\n")
+    file2.write("start,end(inclusive),SentenceCount,SentimentCount\n")
+
+    begin= datetime.fromtimestamp(1259643600) #first ever comment as of now is dec 2009
+    end = begin+relativedelta(months=1)-relativedelta(days=1)  #end is inclusive
+
+    while begin < datetime.now():
+        #MAKE FILE 2    
+        stmt = 'SELECT count(*) '\
+                'from {sent} '\
+                'WHERE Product = "{prod}" and Date BETWEEN "{st}" and "{en}"'.format(sent=sent_table, prod=site.product.name, st=begin.strftime('%Y-%m-%d'),en=end.strftime('%Y-%m-%d'))
+        
+        for d in site.dbc.select_generator(stmt):
+            totsentences = d[0]
+                    
+        stmt = 'SELECT count(*) ' \
+               'from {res} INNER JOIN {sent} \n '\
+               'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash ' \
+               'WHERE {sent}.Product = "{prod}" and {sent}.Date BETWEEN "{b}" and "{e}" \n'.format(sent=sent_table,prod=site.product.name,res=results_table,b=begin.strftime('%Y-%m-%d'),e=end.strftime('%Y-%m-%d'))
+
+        for d in site.dbc.select_generator(stmt):
+            sentsWithFeatures = d[0]
+        
+        #WRITE FILE 2
+        file2.write(begin.strftime('%Y-%m-%d') + "," + end.strftime('%Y-%m-%d') + "," + str(totsentences) + "," + str(sentsWithFeatures) + "\n")
+        
+        #MAKE FILE 1
+        stmt = 'SELECT {res}.Feature, {res}.Label ' \
+               'from {res} INNER JOIN {sent} \n '\
+               'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash ' \
+               'WHERE {sent}.Product = "{prod}" and {sent}.Date BETWEEN "{b}" and "{e}"'.format(sent=sent_table,prod=site.product.name,res=results_table,b=begin.strftime('%Y-%m-%d'),e=end.strftime('%Y-%m-%d'))
+            
+        #WRITE FILE 1
+        res = dict()
+        for feat in site.product.features.keys():
+            res[feat] = dict()
+            res[feat]["POS"] = 0
+            res[feat]["NEU"] = 0
+            res[feat]["NEG"] = 0     
+            res[feat]["TOT"] = 0          
+
+        for d in site.dbc.select_generator(stmt):
+            f = str(d[0])
+            c = str(d[1])
+            res[f][c] += 1
+            res[f]["TOT"] += 1
+        
+        for f in res.keys():
+            file1.write(begin.strftime('%Y-%m-%d') + "," + end.strftime('%Y-%m-%d') + "," + f + "," + str(res[f]["POS"]) + "," + str(res[f]["NEU"]) + "," + str(res[f]["NEG"]) + "," + str(res[f]["TOT"]) + "\n") 
+        begin=begin+relativedelta(months=1)
+        end = begin+relativedelta(months=1)-relativedelta(days=1)  #end is inclujsive
+
+    file1.close()
+    file2.close()
+
+#prints a query to show sentences that were incorrectly classified w.r.t. ground truth
+def wrong_sentences(site):
+    debugging_logger.debug("Computing Wrong Sentences...\n\n")     
+    stmt = 'SELECT {truth}.* \n'\
+            'FROM {truth} \n'\
+            'INNER JOIN {res} ON {truth}.sentenceid = {res}.sentenceid and {truth}.Product = {res}.Product and {truth}.Feature = {res}.Feature \n'\
+            'WHERE {truth}.Label is not {res}.Label and {res}.Product = "{prod}" and {truth}.Product = "{prod}"'.format(res=results_table,truth=truth_table,prod=site.product.name)
+    #TODO: something useful...
+    debugging_logger.debug(stmt)
+    raise NotImplemented("wrong_sentences not implemented!")
+        
+        
+        
+        
+        
+        
+"""
+Was using for some initial data exploration, not using now. 
  
 #returns length of text in words
 def getTextLength(fdist):
@@ -163,81 +243,6 @@ def syn(words):
      # for s in wordnet.synsets(words[r]):
         #    print(s.lemma_names)
         print("\n")
-
-
-
-#NOTE: this function was for a fellow student and you will not need to use it (as is now)
-#this is used to generate a time series of sentiments over time. 
-def GenerateTimeSeries(curSite):
-        
-    file1 = open(rootdir + "/timeseries/" + curSite.ProdObj.Name + "_SentimentTimeSeries.txt","w")     
-    file2 = open(rootdir + "/timeseries/" + curSite.ProdObj.Name + "_GeneralTimeSeries.txt","w")     
-    file1.write("start,end(inclusive),feature,num pos, num neu, num neg, total\n")
-    file2.write("start,end(inclusive),SentenceCount,SentimentCount\n")
-
-    begin= datetime.fromtimestamp(1259643600) #first ever comment as of now is dec 2009
-    end = begin+relativedelta(months=1)-relativedelta(days=1)  #end is inclusive
-
-    while begin < datetime.now():
-        #MAKE FILE 2    
-        stmt = 'SELECT count(*) '\
-                'from {sent} '\
-                'WHERE Product = "{prod}" and Date BETWEEN "{st}" and "{en}"'.format(sent=sentTableName, prod=curSite.ProdObj.Name, st=begin.strftime('%Y-%m-%d'),en=end.strftime('%Y-%m-%d'))
-        
-        for d in curSite.dbc.SQLSelectGenerator(stmt):
-            totsentences = d[0]
-                    
-        stmt = 'SELECT count(*) ' \
-               'from {res} INNER JOIN {sent} \n '\
-               'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash ' \
-               'WHERE {sent}.Product = "{prod}" and {sent}.Date BETWEEN "{b}" and "{e}" \n'.format(sent=sentTableName,prod=curSite.ProdObj.Name,res=resultsTableName,b=begin.strftime('%Y-%m-%d'),e=end.strftime('%Y-%m-%d'))
-
-        for d in curSite.dbc.SQLSelectGenerator(stmt):
-            sentsWithFeatures = d[0]
-        
-        #WRITE FILE 2
-        file2.write(begin.strftime('%Y-%m-%d') + "," + end.strftime('%Y-%m-%d') + "," + str(totsentences) + "," + str(sentsWithFeatures) + "\n")
-        
-        #MAKE FILE 1
-        stmt = 'SELECT {res}.Feature, {res}.Label ' \
-               'from {res} INNER JOIN {sent} \n '\
-               'ON {res}.ProdDateSentHash = {sent}.ProdDateSentHash ' \
-               'WHERE {sent}.Product = "{prod}" and {sent}.Date BETWEEN "{b}" and "{e}"'.format(sent=sentTableName,prod=curSite.ProdObj.Name,res=resultsTableName,b=begin.strftime('%Y-%m-%d'),e=end.strftime('%Y-%m-%d'))
-            
-        #WRITE FILE 1
-        res = dict()
-        for feat in curSite.ProdObj.Features.keys():
-            res[feat] = dict()
-            res[feat]["POS"] = 0
-            res[feat]["NEU"] = 0
-            res[feat]["NEG"] = 0     
-            res[feat]["TOT"] = 0          
-
-        for d in curSite.dbc.SQLSelectGenerator(stmt):
-            f = str(d[0])
-            c = str(d[1])
-            res[f][c] += 1
-            res[f]["TOT"] += 1
-        
-        for f in res.keys():
-            file1.write(begin.strftime('%Y-%m-%d') + "," + end.strftime('%Y-%m-%d') + "," + f + "," + str(res[f]["POS"]) + "," + str(res[f]["NEU"]) + "," + str(res[f]["NEG"]) + "," + str(res[f]["TOT"]) + "\n") 
-        begin=begin+relativedelta(months=1)
-        end = begin+relativedelta(months=1)-relativedelta(days=1)  #end is inclujsive
-
-    file1.close()
-    file2.close()
-
-#prints a query to show sentences that were incorrectly classified w.r.t. ground truth
-def showWrongSentences(currSite):
-    debugging_logger.debug("Computing Wrong Sentences...\n\n")     
-    stmt = 'SELECT {truth}.* \n'\
-            'FROM {truth} \n'\
-            'INNER JOIN {res} ON {truth}.sentenceid = {res}.sentenceid and {truth}.Product = {res}.Product and {truth}.Feature = {res}.Feature \n'\
-            'WHERE {truth}.Label is not {res}.Label and {res}.Product = "{prod}" and {truth}.Product = "{prod}"'.format(res=resultsTableName,truth=truthTableName,prod=currSite.ProdObj.Name)
-    #TODO: something useful...
-    debugging_logger.debug(stmt)
-    raise NotImplemented("showWrongSentences not implemented!")
-        
-
+"""        
         
 

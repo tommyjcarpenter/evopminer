@@ -23,46 +23,40 @@ THE SOFTWARE.
 # Define your item pipelines here
 # Don't forget to add your pipeline to the ITEM_PIPELINES setting
 # See: http://doc.scrapy.org/topics/item-pipeline.html
-from unidecode import unidecode #used to convert strange unicode into ascii
-from lib.utils.stringFunctions import ContractionsTagsWhitey
-from lib.utils.databaseConnector import cralwerDBObject
+from lib.utils.string_functions import cleanse_tags_contractions_whitespace
+from lib.utils.mysql import CrawlerDBC
 
 
-#cleans the items before being entered into the database. 
-class teslaMotorsClubClean(object):
-
-      
+#cleans the volt items before being entered into the database. 
+class VoltCleaner(object):
    def process_item(self, item, spider):
-       #MUST HAVE THIS! All piplines registered in settings file are run on every item for all spiders, 
-       #so this is a way to make sure only pipelines you want run on this items run
-       #it is a hack to have a project which not all pipelines run on all spider items
-       #see: http://stackoverflow.com/questions/8372703/how-can-i-use-different-pipelines-for-different-spiders-in-a-single-scrapy-proje
-       if 'teslaMotorsClubClean' not in getattr(spider, 'pipelines'):
+       if 'VoltCleaner' not in getattr(spider, 'pipelines'):
           return item
-    
-       #infer numcomments
-       item['numcomments'] = len(item['comments'])
        
        #fix contractions in title
-       item['title'] = ContractionsTagsWhitey(item['title'])
+       item['title'] = cleanse_tags_contractions_whitespace(item['title'])
+       
+       #infer numcomments
+       item['numcomments'] = len(item['comments'])
        
        #make the comments into pairs {date|||comment}  pipes used because later i need to parse the date out and need a unique seperator. 
        comments = ""
        for c in range(0,len(item['comments'])): 
            #need to kill the quoted text, but cant do this in xpath becasue the post will contain divs seperating
-           #the quoted text and the actual reply of the user. So, we extract the part of the message containing the actual reply here. 
-           thec = item['comments'][c].split("</div>")[-1].split("</blockquote>")[0].strip() #actual content is after last div before </blockquote           
-           comments += "{" + item['commentdates'][c] + "|||" + (ContractionsTagsWhitey(thec) + "}\n")
-       item['newCommentFormat'] = comments          
+           #the quoted text and the actual reply of the user. So, we extract the part of the message containing the actual reply here.  
+           #see myNIssanLeaf spider for more details
+           #note this wont work if there is a quote before and after a posters post, but hopefully the number of these si small
+           thec = item['comments'][c].split("</div>")[-1]
+           comments += "{" + item['commentdates'][c] + "|||" + (cleanse_tags_contractions_whitespace(thec) + "}\n")
+       item['newCommentFormat'] = comments
        return item
  
-
 #put the items in de db      
-class teslaMotorsClubDB(cralwerDBObject):  
+class VoltDBC(CrawlerDBC):    
     def process_item(self, item, spider):
-       if 'teslaMotorsClubDB' not in getattr(spider, 'pipelines'):
+       if 'VoltDBC' not in getattr(spider, 'pipelines'):
           return item
-       q = 'insert into TeslaReviews (BaseSite,Content,Title,Url,NumComments,Comments) values (\'{0}\', \'{1}\', \'{2}\', \'{3}\',\'{4}\', \'{5}\')'.format(item['site'],item['contenttype'],item['title'],item['url'],item['numcomments'],item['newCommentFormat'])       
+       q = 'insert into VoltReviews (BaseSite,Content,Title,Url,NumComments,Comments) values (\'{0}\', \'{1}\', \'{2}\', \'{3}\',\'{4}\', \'{5}\')'.format(item['site'],item['contenttype'],item['title'],item['url'],item['numcomments'],item['newCommentFormat'])       
        self.insertItem(item, q)
        return item
 
