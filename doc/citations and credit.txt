@@ -1,0 +1,15 @@
+Our default sentiment dictionary in "defaultSentiments.txt" (which was transformed from the original file
+ "subjclueslen1-HLTEMNLP05.tff" which is still in this package)
+ is based on (but modified) from the following three works by Theresa Wilson:
+
+1)Theresa Wilson. Mpqa opinion corpus. http://www.cs.pitt.edu/mpqa/.
+
+2) Theresa Wilson, Janyce Wiebe, and Rebecca Hwa. Just how mad are you? Finding strong and weak opinion
+clauses. AAAI, 2004.
+
+3) Theresa Ann Wilson. Fine-grained Subjectivity and Sentiment Analysis: Recognizing the Intensity, Polarity,
+and Attitudes of Private States. PhD thesis, University of Pittsburgh, 2008.
+
+The list of contractions in "contractions.txt" is based on the following wikipedia page: http://en.wikipedia.org/wiki/Wikipedia:List_of_English_contractions
+
+The list of misspellings in "misspellings.txt" is based on the following wikipedia page: http://en.wikipedia.org/wiki/Wikipedia:Lists_of_common_misspellings/For_machines

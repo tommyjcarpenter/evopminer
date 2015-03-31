@@ -1,0 +1,499 @@
+#Copyright (c) 2013 Tommy Carpenter
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy
+#of this software and associated documentation files (the "Software"), to deal
+#in the Software without restriction, including without limitation the rights
+#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#copies of the Software, and to permit persons to whom the Software is
+#furnished to do so, subject to the following conditions:
+
+#The above copyright notice and this permission notice shall be included in
+#all copies or substantial portions of the Software.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#THE SOFTWARE.
+#"""
+
+
+
+#  ___ ___   _ _____ _   _ ___ ___  __   _____ ___ _____ ___  ___  ___ 
+# | __| __| /_\_   _| | | | _ \ __| \ \ / / __/ __|_   _/ _ \| _ \/ __|
+# | _|| _| / _ \| | | |_| |   / _|   \ V /| _| (__  | || (_) |   /\__ \
+# |_| |___/_/ \_\_|  \___/|_|_\___|   \_/ |___\___| |_| \___/|_|_\|___/
+#features and their synonyms
+#charge anxiety is a form of range anxiety
+NEGFeature RA range-anxiety,range-concerns,charge-anxiety
+NEGFeature Degradation lost-range,cell-degradation,range-loss,degraded-battery,range-capacity,capacity-issue,battery-capacity-issues,capacity-issues,battery-has-degraded,lost-capacity,range-degradation,battery-degradation,battery-deterioration,capacity-loss,loss-of-capacity,loss-of-battery-capacity,loss-of-usable-capacity,capacity-losses,battery-losses,capacity-degradation,capacity-deterioration,battery-capacity-losses,degradation
+
+# Feature changes for cost,costs from General -> Price, but cant put these in price because WAY 
+#to many posts about the cost/costs of other things than the vehicle and charging
+NEGFeature Price fuel-cost,fuel-costs,payback-period,cost-charging,charging-cost,charging-costs,total-cost-ownership,tco,total-cost
+#cant use maintain here because too many people use the word maintain to describe something else
+NEGFeature Maintenance maintenance
+POSFeature Range range,usable-range,distance,miles-single-charge,miles-full-charge,miles-charge,miles-charge,on-battery,aer,battery-range,miles-range,battery-miles,battery-reserve,electric-range,electric-miles,miles-per-charge,all-electric-range,ev-range
+POSFeature Safety safety-issue,safety-precaution,safety,safety-equipment,safety-feature,safety-features,safety-rating,safety-stars,safety-gear,charging-safety,airbags,airbag,seat-belt,seat-belts,safety-belt,safety-belts,crash-sensor
+POSFeature Seating/Cargo seating,seating-capacity,cargo,cargo-space,cargo-room,seats,trunk,trunk-space,cargo-volume,trunk-cargo
+POSFeature Warranty warranty,battery-warranty,hazard-warranty,extended-warranty,limited-warranty
+Feature Performance performance,handling,maximum-speed,top-speed,regenerative-braking,braking,steering,powertrain,stability-control,power-steering,torque,motor-power,traction-control,traction
+Feature Battery effective-capacity,batteries,useful-pack-capacity,useful-battery-capacity,usable-battery,usable-charge,battery,li-ion,lithium-ion,battery-capacity,battery-efficiency,capacity,battery-performance,usable-capacity,battery-pack,pack-capacity,usable-battery-capacity,effective-battery-capacity,total-battery-capacity
+Feature Climate_Control pre-heating,climate-control,air-conditioning,ac,heating,cooling,heated-seats,interior-heating,fan-only-mode,fan-only,heater-use
+Feature Charging blink,charger,chargepoint,charge,overnight-charging,charging,charging-time,charge-cord,charge-plug,charging-station,charging-stations,public-charging,station,public-charging-stations,public-charging-station,l1,l2,l3,level1,level2,level3,l1-charging,l2-charging,l3-charging
+Feature LooksAndDesign design,designed,design-decision,design-characteristic,exterior,interior,interior-room,interior-trim,upholstery,aesthetics,aesthetically,engineered
+Feature Environment environmentally,environment,sustainability
+Feature Misc_Features voice-recognition,keyless-entry,steering-wheel,center-console,cruise-control,remote-start,navigation,nav,acoustics,hands-free-calling,backup-camera,rear-view-camera
+Feature General vehicle
+#for price there are a bunch of feature changers around General; see below. 
+
+
+#SUSPENSION,liability,insure
+
+#  __  __ _   _ _  _____ ___  __      _____  ___ ___    ___ _  _ ___    _   ___ ___ ___ 
+# |  \/  | | | | ||_   _|_ _| \ \    / / _ \| _ \   \  | _ \ || | _ \  /_\ / __| __/ __|
+# | |\/| | |_| | |__| |  | |   \ \/\/ / (_) |   / |) | |  _/ __ |   / / _ \\__ \ _|\__ \
+# |_|  |_|\___/|____|_| |___|   \_/\_/ \___/|_|_\___/  |_| |_||_|_|_\/_/ \_\___/___|___/                                                                                
+# THESE CAN BE USED ANYWHERE ELSE IN THE FILE, AND CAN ALSO BE VALENCE SHIFTERS, BECUASE MUTLI WORDS ARE REPLACED FIRST. DOUBLE PHRASES
+# CAN BE FEATURE SYNONYMS, NONADJOPS, VALENCE SHIFTERS, INTENSITY MODIFIERS, ETC. 
+
+#THESE MESS OTHER STUFFS UP!
+#least, much etc. are intensity modifiers, but are used in other ways here. 
+#others here, like road hazards, are because hazards is a dom spec op but is not an opinion when it comes to road hazards
+DOUBLEPHRASE at least at-least
+DOUBLEPHRASE how much how-much
+DOUBLEPHRASE road hazards road-hazards
+DOUBLEPHRASE as well as-well
+DOUBLEPHRASE safety issue safety-issue
+DOUBLEPHRASE due to due-to
+
+
+#these mess up battery because they are talking about a different kind of battery
+DOUBLEPHRASE phone battery phone-battery
+DOUBLEPHRASE 12v battery 12-volt-battery
+DOUBLEPHRASE 12volt battery 12-volt-battery
+TRIPLEPHRASE 12 volt battery 12-volt-battery
+DOUBLEPHRASE 12-volt battery 12-volt-battery
+DOUBLEPHRASE volt charger volt-charger
+DOUBLEPHRASE worth of charge worth-of-charge
+DOUBLEPHRASE wide range wide-range
+
+#used becasue valence shifter does not negate meaning in these cases
+DOUBLEPHRASE not only not-only
+TRIPLEPHRASE do not know do-not-know
+
+#valence shifter
+DOUBLEPHRASE with out without
+#otherwise this gets parsed as VS HINTM which screws up POSFeatures
+DOUBLEPHRASE no longer no-longer 
+
+#used for ignores or so that they are not confused with feature
+TRIPLEPHRASE as long as as-long-as
+TRIPLEPHRASE low battery warning low-battery-warning
+DOUBLEPHRASE does anyone does-anyone
+DOUBLEPHRASE do you do-you
+DOUBLEPHRASE are there are-there
+DOUBLEPHRASE are you are-you
+DOUBLEPHRASE is there is-there
+DOUBLEPHRASE say that say-that
+DOUBLEPHRASE fill up fill-up
+DOUBLEPHRASE in theory in-theory
+TRIPLEPHRASE battery state charge battery-state-charge  
+DOUBLEPHRASE state charge state-charge  
+DOUBLEPHRASE battery soc battery-soc
+DOUBLEPHRASE for the for-the
+
+#Normal ones used as a sentiment 
+DOUBLEPHRASE 4 star 4-star
+DOUBLEPHRASE 5 star 5-star
+DOUBLEPHRASE air conditioning air-conditioning
+DOUBLEPHRASE backup camera backup-camera
+DOUBLEPHRASE battery capacity battery-capacity
+DOUBLEPHRASE battery pack battery-pack
+DOUBLEPHRASE battery range battery-range
+DOUBLEPHRASE battery miles battery-miles
+DOUBLEPHRASE battery reserve battery-reserve
+DOUBLEPHRASE battery life battery-life
+DOUBLEPHRASE battery terminal battery-terminal
+DOUBLEPHRASE battery cable battery-cable
+DOUBLEPHRASE battery pack battery-pack
+DOUBLEPHRASE battery performance battery-performance
+DOUBLEPHRASE battery warranty battery-warranty
+DOUBLEPHRASE battery efficiency battery-efficiency
+DOUBLEPHRASE battery light battery-light // messes up battery
+DOUBLEPHRASE center console center-console
+DOUBLEPHRASE seating capacity seating-capacity
+DOUBLEPHRASE cargo space cargo-space
+DOUBLEPHRASE cargo room cargo-room
+DOUBLEPHRASE cargo volume cargo-volume
+DOUBLEPHRASE charging safety charging-safety
+DOUBLEPHRASE charging time charging-time
+DOUBLEPHRASE charging station charging-station
+DOUBLEPHRASE charging stations charging-stations
+DOUBLEPHRASE charge cord charge-cord
+DOUBLEPHRASE charge plug charge-plug
+DOUBLEPHRASE crash sensor crash-sensor
+DOUBLEPHRASE climate control climate-control
+DOUBLEPHRASE cruise control cruise-control
+DOUBLEPHRASE drivetrain efficiency drivetrain-efficiency
+DOUBLEPHRASE design decision design-decision
+DOUBLEPHRASE design characteristic design-characteristic
+DOUBLEPHRASE electric range electric-range
+DOUBLEPHRASE electric miles electric-miles
+DOUBLEPHRASE extended warranty extended-warranty
+DOUBLEPHRASE ev range ev-range
+DOUBLEPHRASE effective capacity effective-capacity
+DOUBLEPHRASE fan only fan-only
+DOUBLEPHRASE game changer game-changer
+DOUBLEPHRASE game changing game-changing
+DOUBLEPHRASE high tech high-tech
+DOUBLEPHRASE heated seats heated-seats
+DOUBLEPHRASE heater use heater-use
+DOUBLEPHRASE hazard warranty hazard-warranty
+DOUBLEPHRASE interior room interior-room
+DOUBLEPHRASE interior trim interior-trim
+DOUBLEPHRASE interior heating interior-heating
+DOUBLEPHRASE keyless entry keyless-entry
+DOUBLEPHRASE motor power motor-power
+DOUBLEPHRASE lifetime mpg lifetime-mpg
+DOUBLEPHRASE li ion li-ion
+DOUBLEPHRASE lithium ion lithium-ion
+DOUBLEPHRASE limited warranty limited-warranty
+DOUBLEPHRASE l1 charging l1-charging
+DOUBLEPHRASE l2 charging l2-charging
+DOUBLEPHRASE l3 charging l3-charging
+DOUBLEPHRASE level 1 l1-charging
+DOUBLEPHRASE level 2 l2-charging
+DOUBLEPHRASE level 3 l3-charging
+DOUBLEPHRASE range capacity range-capacity
+DOUBLEPHRASE maximum speed maximum-speed
+DOUBLEPHRASE miles range miles-range
+DOUBLEPHRASE much like much-like
+DOUBLEPHRASE overall ownership overall-ownership
+DOUBLEPHRASE overnight charging overnight-charging
+DOUBLEPHRASE pack capacity pack-capacity
+DOUBLEPHRASE public charging public-charging
+DOUBLEPHRASE power steering power-steering
+DOUBLEPHRASE remote start remote-start
+DOUBLEPHRASE range anxiety range-anxiety
+DOUBLEPHRASE charge anxiety charge-anxiety
+DOUBLEPHRASE range concerns range-concerns
+DOUBLEPHRASE regenerative braking regenerative-braking
+DOUBLEPHRASE safety equipment safety-equipment
+DOUBLEPHRASE safety feature safety-feature
+DOUBLEPHRASE safety features safety-features
+DOUBLEPHRASE safety gear safety-gear
+DOUBLEPHRASE safety rating safety-rating
+DOUBLEPHRASE safety stars safety-stars
+DOUBLEPHRASE seat belts seat-belts
+DOUBLEPHRASE seat belt seat-belt
+DOUBLEPHRASE safety belts safety-belts
+DOUBLEPHRASE safety belt safety-belt
+DOUBLEPHRASE payback period payback-period
+DOUBLEPHRASE service experience service-experience
+DOUBLEPHRASE service department service-department
+DOUBLEPHRASE safety precaution safety-precaution
+DOUBLEPHRASE steering wheel steering-wheel
+DOUBLEPHRASE stop working stop-working
+DOUBLEPHRASE stopped working stopped-working
+DOUBLEPHRASE stability control stability-control
+DOUBLEPHRASE top speed top-speed
+DOUBLEPHRASE trunk space trunk-space
+DOUBLEPHRASE trunk cargo trunk-cargo
+DOUBLEPHRASE traction control traction-control
+DOUBLEPHRASE sound system sound-system
+DOUBLEPHRASE usable capacity usable-capacity
+DOUBLEPHRASE usable range usable-range
+DOUBLEPHRASE usable charge usable-charge
+DOUBLEPHRASE usable battery usable-battery
+TRIPLEPHRASE miles per charge miles-per-charge
+TRIPLEPHRASE public charging stations public-charging-stations
+TRIPLEPHRASE public charging station public-charging-station
+TRIPLEPHRASE all electric range all-electric-range
+TRIPLEPHRASE parts and labor parts-and-labor
+TRIPLEPHRASE fan only mode fan-only-mode 
+
+#cost phrases
+DOUBLEPHRASE charging costs charging-costs
+DOUBLEPHRASE charging cost charging-cost
+DOUBLEPHRASE fuel cost fuel-cost
+DOUBLEPHRASE fuel costs fuel-costs
+DOUBLEPHRASE total cost total-cost
+#the word of is removed as a stopword
+DOUBLEPHRASE cost charging cost-charging
+TRIPLEPHRASE total cost ownership total-cost-ownership
+
+TRIPLEPHRASE hard to justify hard-to-justify
+TRIPLEPHRASE hands free calling hands-free-calling 
+TRIPLEPHRASE level 1 charging l1-charging
+TRIPLEPHRASE level 2 charging l2-charging
+TRIPLEPHRASE level 3 charging l3-charging
+TRIPLEPHRASE usable battery capacity usable-battery-capacity
+TRIPLEPHRASE useful battery capacity useful-battery-capacity
+TRIPLEPHRASE useful pack capacity useful-pack-capacity
+TRIPLEPHRASE effective battery capacity effective-battery-capacity 
+TRIPLEPHRASE total battery capacity total-battery-capacity
+TRIPLEPHRASE rear view camera rear-view-camera
+
+
+#range
+DOUBLEPHRASE on battery on-battery
+DOUBLEPHRASE miles charge miles-charge
+TRIPLEPHRASE miles single charge miles-single-charge
+TRIPLEPHRASE miles full charge miles-full-charge
+
+#for battery loss feature
+DOUBLEPHRASE battery losses battery-losses
+DOUBLEPHRASE battery degradation battery-degradation
+DOUBLEPHRASE battery deterioration battery-deterioration
+DOUBLEPHRASE capacity loss capacity-loss
+DOUBLEPHRASE capacity losses capacity-losses
+DOUBLEPHRASE capacity degradation capacity-degradation
+DOUBLEPHRASE cell degradation cell-degradation
+DOUBLEPHRASE range degradation range-degradation
+DOUBLEPHRASE lost capacity lost-capacity
+DOUBLEPHRASE loss capacity loss-capacity
+DOUBLEPHRASE lost range lost-range
+DOUBLEPHRASE capacity issues capacity-issues
+DOUBLEPHRASE capacity issue capacity-issue
+DOUBLEPHRASE degraded battery degraded-battery
+DOUBLEPHRASE range loss range-loss
+TRIPLEPHRASE battery capacity losses battery-capacity-losses
+TRIPLEPHRASE battery has degraded battery-has-degraded
+TRIPLEPHRASE loss battery capacity loss-battery-capacity
+TRIPLEPHRASE loss usable capacity loss-usable-capacity 
+TRIPLEPHRASE battery capacity issues battery-capacity-issues
+
+
+#  ___ __  __ ___ _    ___ ___ ___ _____   ___ ___   _ _____ _   _ ___ ___ ___ 
+# |_ _|  \/  | _ \ |  |_ _/ __|_ _|_   _| | __| __| /_\_   _| | | | _ \ __/ __|
+#  | || |\/| |  _/ |__ | | (__ | |  | |   | _|| _| / _ \| | | |_| |   / _|\__ \
+# |___|_|  |_|_| |____|___\___|___| |_|   |_| |___/_/ \_\_|  \___/|_|_\___|___/
+# replaced with the tag IMPLICITFEAT in the sentences. These represent both an adj and implicitly a feature
+IMPLICITFEATOP capacity-issues
+IMPLICITFEATOP battery-capacity-issues
+
+#  ___ ___ _  _  ___  ___ ___   _  _______   ____      _____  ___ ___  ___ 
+# |_ _/ __| \| |/ _ \| _ \ __| | |/ / __\ \ / /\ \    / / _ \| _ \   \/ __|
+#  | | (_ | .` | (_) |   / _|  | ' <| _| \ V /  \ \/\/ / (_) |   / |) \__ \
+# |___\___|_|\_|\___/|_|_\___| |_|\_\___| |_|    \_/\_/ \___/|_|_\___/|___/
+#Ignore chunks as (NEUTRAL) if sentence contains one of these. These can also go in ignorewithinchunk,
+#but those were all language constructs and these are specific to EVs, so they belong here. 
+IGNOREKEYWORD prius
+IGNOREKEYWORD ipod
+IGNOREKEYWORD iphone
+IGNOREKEYWORD rav4
+IGNOREKEYWORD bmw
+IGNOREKEYWORD audi
+IGNOREKEYWORD low-battery-warning
+IGNOREKEYWORD tires
+#too many people use this to talk about what is good and bad for the battery, but not express sentiment
+
+
+#  ___ ___   _ _____ _   _ ___ ___    ___ _  _   _   _  _  ___ ___ ___  ___ 
+# | __| __| /_\_   _| | | | _ \ __|  / __| || | /_\ | \| |/ __| __| _ \/ __|
+# | _|| _| / _ \| | | |_| |   / _|  | (__| __ |/ _ \| .` | (_ | _||   /\__ \
+# |_| |___/_/ \_\_|  \___/|_|_\___|  \___|_||_/_/ \_\_|\_|\___|___|_|_\|___/                                                                  
+FEATURECHANGER General cheap Price
+FEATURECHANGER General cheaper Price
+FEATURECHANGER General affordable Price 
+FEATURECHANGER General inexpensive Price
+FEATURECHANGER General expensive Price
+FEATURECHANGER General price Price
+FEATURECHANGER General costly Price
+FEATURECHANGER General cost Price
+FEATURECHANGER General costs Price
+FEATURECHANGER General pricey Price
+FEATURECHANGER General savings Price
+FEATURECHANGER General saving Price
+FEATURECHANGER General saved Price
+FEATURECHANGER General save Price
+FEATURECHANGER General money Price
+FEATURECHANGER General looking LooksAndDesign
+FEATURECHANGER General looks LooksAndDesign
+FEATURECHANGER General look LooksAndDesign
+FEATURECHANGER General handles Performance
+FEATURECHANGER General pre-heating Climate_Control
+FEATURECHANGER General heats Climate_Control
+FEATURECHANGER General heating Climate_Control
+FEATURECHANGER General hot Climate_Control
+FEATURECHANGER General cools Climate_Control
+FEATURECHANGER General cooling Climate_Control
+FEATURECHANGER General cold Climate_Control
+FEATURECHANGER General unsafe Safety
+FEATURECHANGER General dangerous Safety
+FEATURECHANGER General safe Safety
+FEATURECHANGER Battery lost Degradation
+FEATURECHANGER Battery loss Degradation
+FEATURECHANGER Battery losing Degradation
+FEATURECHANGER Battery losses Degradation
+FEATURECHANGER Battery losing Degradation
+FEATURECHANGER General sustainable Environment
+FEATURECHANGER General environmental Environment
+FEATURECHANGER Battery degrade Degradation
+
+#lots of sentences about heating the interior:
+FEATURECHANGER LooksAndDesign heats Climate_Control
+FEATURECHANGER LooksAndDesign heating Climate_Control
+FEATURECHANGER LooksAndDesign hot Climate_Control
+FEATURECHANGER LooksAndDesign cools Climate_Control
+FEATURECHANGER LooksAndDesign cooling Climate_Control
+FEATURECHANGER LooksAndDesign cold Climate_Control
+
+# | \| |/ _ \| \| |    /_\ |   \ _ | |   / _ \| _ \_ _| \| |_ _/ _ \| \| |  | _ \ || | _ \  /_\ / __| __/ __|
+# | .` | (_) | .` |   / _ \| |) | || |  | (_) |  _/| || .` || | (_) | .` |  |  _/ __ |   / / _ \\__ \ _|\__ \
+# |_|\_|\___/|_|\_|  /_/ \_\___/ \__/    \___/|_| |___|_|\_|___\___/|_|\_|  |_| |_||_|_|_\/_/ \_\___/___|___/
+#Left to def sentiments - these always have themiles on a single charge same sentiment
+#also includes some tagged incorrectly by stanford parser
+NONADJOP appealing
+NONADJOP barrier
+NONADJOP barriers
+NONADJOP well
+NONADJOP optimized
+NONADJOP solved
+NONADJOP benefits
+NONADJOP breakthrough
+NONADJOP benefit
+NONADJOP love
+NONADJOP hate
+NONADJOP win
+NONADJOP wins
+NONADJOP losing
+NONADJOP downside
+NONADJOP impressed
+NONADJOP problems
+NONADJOP problem
+NONADJOP trouble
+NONADJOP troubles
+NONADJOP complaint
+NONADJOP complaints
+NONADJOP deterrent
+NONADJOP issue
+NONADJOP issues
+NONADJOP 4-star
+NONADJOP flaw
+NONADJOP flawlessly
+NONADJOP beautifully
+NONADJOP hazard
+NONADJOP hazards
+NONADJOP improve
+NONADJOP improved
+NONADJOP concern
+NONADJOP concerns
+NONADJOP costly
+NONADJOP concerned
+NONADJOP convenience
+NONADJOP easier
+NONADJOP easily
+NONADJOP failed
+NONADJOP fail
+NONADJOP fast
+NONADJOP fun
+NONADJOP faster
+NONADJOP looking
+NONADJOP looks
+NONADJOP look
+NONADJOP limitation
+NONADJOP improvements
+NONADJOP pleased
+NONADJOP pricey
+NONADJOP malfunctioning
+NONADJOP malfunction
+NONADJOP malfunctioned
+NONADJOP nicely
+NONADJOP optimize
+NONADJOP improved
+NONADJOP thrill
+NONADJOP thrilled
+NONADJOP quality
+NONADJOP worried
+NONADJOP worries
+NONADJOP stress
+NONADJOP stresses
+NONADJOP save
+NONADJOP saved
+NONADJOP saving
+NONADJOP savings
+NONADJOP sucks
+NONADJOP impresses
+NONADJOP enjoying
+NONADJOP enjoy
+NONADJOP oddly
+NONADJOP joke
+NONADJOP kills
+NONADJOP lost
+NONADJOP uncertainty
+NONADJOP broke
+NONADJOP problem-free
+
+#defined below - domain specific
+NONADJOP 4-star
+NONADJOP 5-star
+NONADJOP crack
+NONADJOP cracks
+NONADJOP recall
+NONADJOP interrupted
+NONADJOP astonished
+NONADJOP waste
+NONADJOP wasted
+NONADJOP wastes
+NONADJOP worth
+
+#  ___ ___  ___  ___      ___ ___   _ _____   ___ ___ _  _ _____   ___ ___ ___ _____ 
+# | _ \ _ \/ _ \|   \ ___| __| __| /_\_   _| / __| __| \| |_   _| |   \_ _/ __|_   _|
+# |  _/   / (_) | |) |___| _|| _| / _ \| |   \__ \ _|| .` | | |   | |) | | (__  | |  
+# |_| |_|_\\___/|___/    |_| |___/_/ \_\_|   |___/___|_|\_| |_|   |___/___\___| |_|  
+#THESE OVERRIDE DEFTAULT SENTIMENTS, AND ARE CHECKED FIRST
+
+FeatureWordSentimentTriple Battery dead NEU
+FeatureWordSentimentTriple Battery depleted NEU
+FeatureWordSentimentTriple Battery positive NEU
+FeatureWordSentimentTriple Battery negative NEU
+FeatureWordSentimentTriple Battery best NEU
+
+FeatureWordSentimentTriple Degradation battery-capacity-issues NEG
+FeatureWordSentimentTriple Degradation capacity-issues NEG
+FeatureWordSentimentTriple Degradation lost NEU
+FeatureWordSentimentTriple Degradation greatest NEU
+
+FeatureWordSentimentTriple Charging top NEU
+FeatureWordSentimentTriple Charging interrupted NEG
+FeatureWordSentimentTriple Charging infrequently POS
+FeatureWordSentimentTriple Charging free POS
+FeatureWordSentimentTriple Charging portable NEU
+
+FeatureWordSentimentTriple Environment green POS
+
+FeatureWordSentimentTriple LooksAndDesign hot POS
+FeatureWordSentimentTriple LooksAndDesign cheap NEG
+FeatureWordSentimentTriple LooksAndDesign funny NEG
+
+FeatureWordSentimentTriple General primary POS 
+FeatureWordSentimentTriple General special POS
+#special is often used for "special gas, special charging unit, etc", except in the context of the car itself
+
+FeatureWordSentimentTriple Maintenance crack NEG
+FeatureWordSentimentTriple Maintenance cracks NEG
+FeatureWordSentimentTriple Maintenance recommended NEU
+
+FeatureWordSentimentTriple Price full NEG
+FeatureWordSentimentTriple Price cheap POS
+FeatureWordSentimentTriple Price cheaper POS
+FeatureWordSentimentTriple Price save POS
+FeatureWordSentimentTriple Price saved POS
+FeatureWordSentimentTriple Price saving POS
+FeatureWordSentimentTriple Price savings POS
+
+FeatureWordSentimentTriple Range kills NEG
+#people always talking about their best range ever or what is best for your range
+FeatureWordSentimentTriple Range best NEU
+
+FeatureWordSentimentTriple Safety 4-star POS
+FeatureWordSentimentTriple Safety 5-star POS
+FeatureWordSentimentTriple Safety recall NEG
+
+FeatureWordSentimentTriple Warranty issues NEU
+FeatureWordSentimentTriple Warranty issue NEU
+

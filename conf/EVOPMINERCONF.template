@@ -1,0 +1,14 @@
+[core]
+rootdir = 
+main_logpath = 
+debugging_logpath = 
+
+[mysql]
+user     = 
+password = 
+host     = 
+port     =
+database = 
+
+[scrapy]
+exec_path = 

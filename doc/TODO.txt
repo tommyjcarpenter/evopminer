@@ -1,0 +1,339 @@
+PYTHON VERSION NOTE:
+This is still in python2.7, but *not by choice*. I have converted all my other projects to python3.
+The reason is that this project critically depends on scrapy, which as of June 2014, (STILL) does not have python3 support. 
+Note, it also depends on NLTK, which is only in alpha for python3, but NLTK3a4 is considered stable and works fine
+for my other projects. So really just waiting on Scrapy. 
+
+
+Still to do: 
+
+1) Currently, there is no *fast* way to debug the classification rules or the classification
+grammar. Currently, the tagging / cleaning phase is run just before the phase where tagged sentences
+are actually classified. These two steps need to be separated.  Currently, to test new features in
+the classification phase, I need to re-run the tagging/preprocessing phase each time. These stages
+take awhile, an hour or more for a large forum, because each sentence has to be searched for a large
+number of contractions, misspellings, incorrect tags, etc. There is really no way to decrease the
+time of this phase: for each sentence, several operations must be performed and several large lists
+must be iterated.  HOWEVER, the *feature to implement* would be a database table that stores tagged
+and processed sentences. Upon implementing this, one could process the sentences in the original
+reviews by cleaning, tagging, and fixing them, then storing these tagged sentences into a database
+table. Thus, the processing phase needs to be done only ONCE (unless you are modifying that phase
+      itself).  Future iterations that wish to debug/modify the classification phase can then just
+pull these classified sentences out of this new table. This would LARGELY decrease debugging time. 
+
+
+2) Documentation (lots more needed).  
+
+Enjoy!
+
+
+Older changenotest:
+
+changeset:   16:6df13ea50fcd
+tag:         tip
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Apr 17 11:18:55 2014 -0400
+summary:     Added some final comments before release
+
+changeset:   15:a27874e31019
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Apr 17 10:43:59 2014 -0400
+summary:     full testing completed! It all works.
+
+changeset:   14:3dcb7c95a721
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 23:56:09 2014 -0400
+summary:     Added more comments. Running one final test shortly before public release.
+
+changeset:   13:1c27cecc444c
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 18:08:29 2014 -0400
+summary:     Something I thought was faster in a specific case was not faster. Also added some more comments
+
+changeset:   12:eddb334a9800
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 16:13:00 2014 -0400
+summary:     minor changes
+
+changeset:   11:7fbfcb88f065
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 15:23:59 2014 -0400
+summary:     Optimizations
+
+changeset:   10:1ed5d8e2c726
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 14:38:20 2014 -0400
+summary:     More dictionary improvements
+
+changeset:   9:0e82b31e5df0
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 12:33:29 2014 -0400
+summary:     even faster! Membership testing for dicts is now O(1) (my last comment was wrong that
+was still O(N) although much much faster than the previous iteration)
+
+changeset:   8:d58c81dbd0f3
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 12:08:37 2014 -0400
+summary:     Added tag 2.4 for changeset 8e35737a08a8
+
+changeset:   7:8e35737a08a8
+tag:         2.4
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 12:08:29 2014 -0400
+summary:     MASSIVE SPEED IMPROVEMENT In cleaning sentences function. Old method: iterate over all
+mispellings and contractions, and attempt to replace each sentence with every single one of those
+(try to do a replace of every sentence with every misspelling,correctspelling pair). Current method:
+break every sentence into words and check whether the word exists in the mispellings or contractions
+dictionary (dict element testing is O(1) time), and replace it only if that exists as a key.
+
+changeset:   6:afe26008bb7c
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 08:55:15 2014 -0400
+summary:     added a prereq file
+
+changeset:   5:bef1b2e9e324
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Apr 16 08:54:56 2014 -0400
+summary:     Some database file improvements so that the function that converts raw reviews into
+clean sentences prints a status report every so often
+
+changeset:   4:822ad9787872
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Tue Apr 15 14:58:34 2014 -0400
+summary:     removed unnecessary folder heirarchy for Scrapy files
+
+changeset:   3:e75c81e89ca2
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Tue Apr 15 14:35:10 2014 -0400
+summary:     Cleaned Out Old Deprecated spiders, and also updated the Volt and Leaf spiders to use
+mysql. Sqlite should now be completely removed
+
+changeset:   0:fbce4ac3cdfc
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Tue Apr 15 10:44:25 2014 -0400
+summary:     Added tag 2.3 for changeset 000000000000
+
+
+_________repo cleaned_________________
+
+
+
+
+changeset:   38:36f0918c7dc8
+tag:         tip
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sun Nov 10 23:00:40 2013 -0500
+summary:     timeseries now nicely alligned to calendar months to produce monthly sentiments
+
+changeset:   37:2276bee00d3f
+parent:      35:5ba73d64ed19
+parent:      36:10383c5bcf24
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 16 14:31:37 2013 -0400
+summary:     Merge with 10383c5bcf246d70ccf72660c2f75244bbc0a599
+
+changeset:   36:10383c5bcf24
+parent:      34:a2914b7ef931
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 12 23:10:16 2013 -0400
+summary:     few bug fixes. 
+
+changeset:   35:5ba73d64ed19
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 16 14:31:02 2013 -0400
+summary:     minor code cleanup
+
+changeset:   34:a2914b7ef931
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 10 13:43:03 2013 -0400
+summary:     V2.2: All sql select queries are now implemented as generator functions to greatly
+reduce memory requirements!
+
+changeset:   33:5ea03d87e804
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 10 13:42:38 2013 -0400
+summary:     Added tag V2.2 for changeset 9d5dc66229aa
+
+changeset:   32:9d5dc66229aa
+tag:         V2.2
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 10 13:10:41 2013 -0400
+summary:     added a comment.,.
+
+changeset:   31:cd0ede6d2f34
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 10 13:09:24 2013 -0400
+summary:     V2.1: Migration from SQLITE to MYSQL, settings file removed.
+
+changeset:   30:90ec8c2229ef
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 10 13:06:04 2013 -0400
+summary:     Added tag V2.1 for changeset 8fdaa20dfa8c
+
+changeset:   29:8fdaa20dfa8c
+tag:         V2.1
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Tue Oct 08 16:38:30 2013 -0400
+summary:     code cleanup
+
+changeset:   28:b1326cd94be0
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Tue Oct 08 14:19:49 2013 -0400
+summary:     implemented helens requests for time series result functions. also cleaned up the DB
+file a bit by making an exectute function.
+
+changeset:   27:8cb235576046
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 15:45:53 2013 -0400
+summary:     Version 2.0!!
+
+changeset:   26:9b659be4d9ce
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 15:42:51 2013 -0400
+summary:     Added tag V2.0 for changeset 39bd84bcafa8
+
+changeset:   25:39bd84bcafa8
+tag:         V2.0
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 13:03:50 2013 -0400
+summary:     System under the new DB structure
+
+changeset:   24:e2214504c4c0
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 13:01:27 2013 -0400
+summary:     Almost done! Eerything working under new database structure. Last thing to do is to
+convert date field in cleanedsentences to a datetime.
+
+changeset:   23:6ecc3d554ab6
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 01:34:37 2013 -0400
+summary:     minor fix so that groundtruth2 can be renamed to groundtruth after its deleted
+
+changeset:   22:6ce6f3facdd5
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 01:30:36 2013 -0400
+summary:     Fixing the full runs of leaf and volt in the morning, then dates will be fully
+oimplemented in the database and schemas can change!
+
+changeset:   21:5b74faf558a2
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sat Oct 05 01:19:17 2013 -0400
+summary:     Leaf and Volt data cleaning functions ready to go!
+
+changeset:   20:02dd15e7208e
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Fri Oct 04 16:16:35 2013 -0400
+summary:     tested the volt cleaning function, all good! Now waiting for Leaf to finish, then will
+
+changeset:   19:b34e4fb77d43
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Fri Oct 04 14:38:21 2013 -0400
+summary:     wrote a function to clean known volt date errors. about to test it out!
+
+changeset:   18:f2f8131e7197
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 22:24:15 2013 -0400
+summary:     Commiting while going to bed... Leaf running overnight.
+
+changeset:   17:93f0fe52e1f0
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 14:09:12 2013 -0400
+summary:     results container file further simplified. Next up: Leaf full run.
+
+changeset:   16:e43da535b45b
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 13:30:56 2013 -0400
+summary:     fixed results dictionary file. Going to attempt to simplify it further
+
+changeset:   15:acfa502b0106
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 12:18:56 2013 -0400
+summary:     remove deprecated code
+
+changeset:   14:57b924a80083
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 12:13:52 2013 -0400
+summary:     more keyword args
+
+changeset:   13:2b40ee847aea
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 12:03:45 2013 -0400
+summary:     more conversions to keyword args
+
+changeset:   12:ba13f7f1de6a
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 11:58:24 2013 -0400
+summary:     more conversions to keyword args
+
+changeset:   11:29cbe9c2a4ca
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Thu Oct 03 11:27:39 2013 -0400
+summary:     volt seems to be working under new database schema!!
+
+changeset:   10:07300c93c202
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 02 17:50:19 2013 -0400
+summary:     no change
+
+changeset:   9:b79a8dda99c2
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 02 17:38:37 2013 -0400
+summary:     Need hash(stringx) to be hash(stringx) forever, Meaning if python changes its internal
+code for hash(), the same string will no longer hash to the same value it used to. This would be bad
+for the database. Switching to SHA
+
+changeset:   8:bdb24c3d83f1
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 02 17:04:45 2013 -0400
+summary:     TRANSITION PHASE 3: Wrote code to migrate old ground truth structure to new ground
+truth structure to follow new cs structure.
+
+changeset:   7:127d5c980592
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 02 14:30:19 2013 -0400
+summary:     date support and hashing support (as a primary key) now build in. going to do a full
+run and then fix all the sentence id errors (switching from id to a hash so that when I recrawl the
+      ids dont conflict with existing ground truth table. By using hashes, the ground truth table
+      will always be valid, instead of having out of date IDs).
+
+changeset:   6:91dc93219b9f
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Wed Oct 02 13:01:11 2013 -0400
+summary:     Using pipes to split date from comments now because it is a unique seperator and a
+comma is not. The problem is the date of a comment applies to all sentences in that comment. When
+parsing out dates, It will be like date|||comment_Sentence_1, commen_sentence_2, .... I needed a way
+to backdate comment_Sentence_2 to get date, and I couldnt do so with date,,,
+
+changeset:   5:3c7673f07f69
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Mon Sep 30 00:11:14 2013 -0400
+summary:     The next step is to add date field to CleanedSentences table. After this is done, we
+can correctly hash date+sentence to get the SentHash for cleaned sentences table. Built a function
+that will allow us to do this and then change the ground truth table once for this conversion/.
+
+changeset:   4:3f519dcca0bd
+parent:      3:a08b2e2324f8
+parent:      2:f5028cac67c5
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sun Sep 29 23:55:59 2013 -0400
+summary:     Merge with f5028cac67c5c9477413e59bcd292980d0c6dee1
+
+changeset:   3:a08b2e2324f8
+parent:      1:e63c511451a9
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Sun Sep 29 23:55:00 2013 -0400
+summary:     Making some massive schema changes. Moving to hashes of date+sentence for sentence IDs
+instead of integer IDs. This is because right now, each time you crawl, it starts generating
+integers at 1 to give to each sentence as setnence ID. However, if you want to completely recrawl
+the forum, this will generate a new set of IDs starting at 1but  these IDs will no longer match the
+setnences in the ground truth table which had IDs from a different run with a different
+number/ordering of sentences. The goal is to be able to recrawl at any time without having to change
+the ground truth table.
+
+changeset:   2:f5028cac67c5
+user:        Tommy Carpenter <tcarpent@uwaterloo.ca>
+date:        Fri Sep 13 13:19:03 2013 -0400
+summary:     Readme file format changes
+Version 1.0
+
+[older than 1.0 truncated]

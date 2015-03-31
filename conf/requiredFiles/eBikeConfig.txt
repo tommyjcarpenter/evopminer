@@ -1,0 +1,117 @@
+#Copyright (c) 2013 Tommy Carpenter
+
+#Permission is hereby granted, free of charge, to any person obtaining a copy
+#of this software and associated documentation files (the "Software"), to deal
+#in the Software without restriction, including without limitation the rights
+#to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+#copies of the Software, and to permit persons to whom the Software is
+#furnished to do so, subject to the following conditions:
+
+#The above copyright notice and this permission notice shall be included in
+#all copies or substantial portions of the Software.
+
+#THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+#IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+#FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+#AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+#LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+#OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+#THE SOFTWARE.
+#"""
+
+#  ___ ___   _ _____ _   _ ___ ___  __   _____ ___ _____ ___  ___  ___ 
+# | __| __| /_\_   _| | | | _ \ __| \ \ / / __/ __|_   _/ _ \| _ \/ __|
+# | _|| _| / _ \| | | |_| |   / _|   \ V /| _| (__  | || (_) |   /\__ \
+# |_| |___/_/ \_\_|  \___/|_|_\___|   \_/ |___\___| |_| \___/|_|_\|___/
+#features and their synonyms
+Feature General ebike,electric-bike,ebikes,e-bike,e-bikes
+NEGFeature Weight weight
+POSFeature Health/Exercise health,fitness,exercise
+NEGFeature Theft theft
+Feature Performance speed
+POSFeature Convenience convenience
+POSFeature Substitute 
+Feature UsageConditions winter,summer,hill,hills,mountain,mountains,weather
+
+
+#  __  __ _   _ _  _____ ___  __      _____  ___ ___    ___ _  _ ___    _   ___ ___ ___ 
+# |  \/  | | | | ||_   _|_ _| \ \    / / _ \| _ \   \  | _ \ || | _ \  /_\ / __| __/ __|
+# | |\/| | |_| | |__| |  | |   \ \/\/ / (_) |   / |) | |  _/ __ |   / / _ \\__ \ _|\__ \
+# |_|  |_|\___/|____|_| |___|   \_/\_/ \___/|_|_\___/  |_| |_||_|_|_\/_/ \_\___/___|___/                                                                                
+# THESE CAN BE USED ANYWHERE ELSE IN THE FILE, AND CAN ALSO BE VALENCE SHIFTERS, BECUASE MUTLI WORDS ARE REPLACED FIRST. DOUBLE PHRASES
+# CAN BE FEATURE SYNONYMS, NONADJOPS, VALENCE SHIFTERS, ETC. 
+#messes up tesla feature
+DOUBLEPHRASE electric bike electric-bike 
+DOUBLEPHRASE mountain bike mountain-bike
+
+#  ___ __  __ ___ _    ___ ___ ___ _____   ___ ___   _ _____ _   _ ___ ___ ___ 
+# |_ _|  \/  | _ \ |  |_ _/ __|_ _|_   _| | __| __| /_\_   _| | | | _ \ __/ __|
+#  | || |\/| |  _/ |__ | | (__ | |  | |   | _|| _| / _ \| | | |_| |   / _|\__ \
+# |___|_|  |_|_| |____|___\___|___| |_|   |_| |___/_/ \_\_|  \___/|_|_\___|___/
+
+
+#  ___ ___   _ _____ _   _ ___ ___    ___ _  _   _   _  _  ___ ___ ___  ___ 
+# | __| __| /_\_   _| | | | _ \ __|  / __| || | /_\ | \| |/ __| __| _ \/ __|
+# | _|| _| / _ \| | | |_| |   / _|  | (__| __ |/ _ \| .` | (_ | _||   /\__ \
+# |_| |___/_/ \_\_|  \___/|_|_\___|  \___|_||_/_/ \_\_|\_|\___|___|_|_\|___/      
+
+#we need alot of these for ebike because many of the survey questions were asked in the form "ebikes are...", 
+#e.g., ebikes are safe, ebikes are convienent, etc.                                                             
+FEATURECHANGER General heavy Weight
+FEATURECHANGER General heavier Weight
+FEATURECHANGER General healthy Health/Exercise
+FEATURECHANGER General healthier Health/Exercise
+FEATURECHANGER General lazy Health/Exercise
+FEATURECHANGER General steal Theft
+FEATURECHANGER General stolen Theft
+FEATURECHANGER General fast Performance
+FEATURECHANGER General faster Performance
+FEATURECHANGER General slow Performance
+FEATURECHANGER General slower Performance
+FEATURECHANGER General convenient Convenience
+FEATURECHANGER General inconvenient Convenience
+FEATURECHANGER General inconvenience Convenience
+FEATURECHANGER General looking LooksAndDesign
+
+
+
+
+
+
+
+# | \| |/ _ \| \| |    /_\ |   \ _ | |   / _ \| _ \_ _| \| |_ _/ _ \| \| |  | _ \ || | _ \  /_\ / __| __/ __|
+# | .` | (_) | .` |   / _ \| |) | || |  | (_) |  _/| || .` || | (_) | .` |  |  _/ __ |   / / _ \\__ \ _|\__ \
+# |_|\_|\___/|_|\_|  /_/ \_\___/ \__/    \___/|_| |___|_|\_|___\___/|_|\_|  |_| |_||_|_|_\/_/ \_\___/___|___/
+#Left to def sentiments - these always have themiles on a single charge same sentiment
+NONADJOP heavier
+NONADJOP healthier
+NONADJOP steal
+NONADJOP stolen
+NONADJOP faster
+NONADJOP slower
+
+#  ___ ___ _  _  ___  ___ ___   _  _______   ____      _____  ___ ___  ___ 
+# |_ _/ __| \| |/ _ \| _ \ __| | |/ / __\ \ / /\ \    / / _ \| _ \   \/ __|
+#  | | (_ | .` | (_) |   / _|  | ' <| _| \ V /  \ \/\/ / (_) |   / |) \__ \
+# |___\___|_|\_|\___/|_|_\___| |_|\_\___| |_|    \_/\_/ \___/|_|_\___/|___/
+#Ignore sentences (NEUTRAL) if sentence contains one of these because its prob not talking about this product                                                                     
+
+
+
+#  ___ ___  ___  ___      ___ ___   _ _____   ___ ___ _  _ _____   ___ ___ ___ _____ 
+# | _ \ _ \/ _ \|   \ ___| __| __| /_\_   _| / __| __| \| |_   _| |   \_ _/ __|_   _|
+# |  _/   / (_) | |) |___| _|| _| / _ \| |   \__ \ _|| .` | | |   | |) | | (__  | |  
+# |_| |_|_\\___/|___/    |_| |___/_/ \_\_|   |___/___|_|\_| |_|   |___/___\___| |_|  
+#THESE OVERRIDE DEFTAULT SENTIMENTS, AND ARE CHECKED FIRST                                                                
+
+FeatureWordSentimentTriple Theft steal NEG
+FeatureWordSentimentTriple Theft stolen NEG
+
+FeatureWordSentimentTriple Weight light POS
+
+FeatureWordSentimentTriple Performance fast POS
+FeatureWordSentimentTriple Performance faster POS
+FeatureWordSentimentTriple Performance slow NEG
+FeatureWordSentimentTriple Performance slower NEG
+
+
